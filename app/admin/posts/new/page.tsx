@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ImageUploader from '@/components/ImageUploader';
 import {
-  FileText,
   Facebook,
   Instagram,
   Linkedin,
@@ -13,6 +12,7 @@ import {
   ArrowLeft,
   Check,
   AlertCircle,
+  AlignLeft,
 } from 'lucide-react';
 
 export default function CreatePostPage() {
@@ -20,6 +20,7 @@ export default function CreatePostPage() {
 
   const [title, setTitle] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [caption, setCaption] = useState('');
   const [facebookUrl, setFacebookUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
@@ -49,6 +50,11 @@ export default function CreatePostPage() {
       return;
     }
 
+    if (caption.length > 5000) {
+      setError('Caption exceeds maximum character limit of 5000 characters.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -59,6 +65,7 @@ export default function CreatePostPage() {
         body: JSON.stringify({
           title: title.trim(),
           imageUrl: imageUrl.trim(),
+          caption: caption.trim() || undefined,
           facebookUrl: facebookUrl.trim() || undefined,
           instagramUrl: instagramUrl.trim() || undefined,
           linkedinUrl: linkedinUrl.trim() || undefined,
@@ -130,6 +137,34 @@ export default function CreatePostPage() {
               Post Image Upload <span className="text-cyan-600">*</span>
             </label>
             <ImageUploader value={imageUrl} onChange={(url) => setImageUrl(url)} />
+          </div>
+
+          {/* Caption (Multiline Textarea directly below Photo field) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
+                <AlignLeft className="h-4 w-4 text-cyan-600" />
+                <span>Post Caption</span>
+                <span className="text-slate-400 font-normal text-[11px] uppercase tracking-normal">
+                  (Optional)
+                </span>
+              </label>
+              <span
+                className={`text-[11px] font-mono font-medium ${
+                  caption.length > 4800 ? 'text-amber-600 font-bold' : 'text-slate-400'
+                }`}
+              >
+                {caption.length} / 5000
+              </span>
+            </div>
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              maxLength={5000}
+              rows={4}
+              placeholder="Write a custom caption or copy message for social media posts (up to 5000 characters)..."
+              className="w-full px-4 py-3 rounded-xl sit-input text-xs sm:text-sm font-medium resize-y"
+            />
           </div>
 
           {/* Optional Social Links */}

@@ -29,6 +29,7 @@ model Post {
   id           String       @id @default(uuid())
   title        String
   imageUrl     String
+  caption      String?      // Multiline text up to 5000 chars
   facebookUrl  String?
   instagramUrl String?
   linkedinUrl  String?

@@ -21,6 +21,7 @@ import {
   ExternalLink,
   X as CloseIcon,
   Check,
+  AlignLeft,
 } from 'lucide-react';
 
 interface SubmissionItem {
@@ -40,6 +41,7 @@ interface PostDetails {
   id: string;
   title: string;
   imageUrl: string;
+  caption?: string | null;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   linkedinUrl?: string | null;
@@ -272,8 +274,22 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
           </div>
 
           <div className="md:col-span-2 space-y-4 flex flex-col justify-between">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h2 className="text-lg font-bold text-slate-900">{post.title}</h2>
+              
+              {/* Optional Post Caption Display */}
+              {post.caption && (
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center space-x-1">
+                    <AlignLeft className="h-3 w-3 text-cyan-600" />
+                    <span>Post Caption</span>
+                  </span>
+                  <p className="text-xs text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
+                    {post.caption}
+                  </p>
+                </div>
+              )}
+
               <div className="text-xs text-slate-500 space-x-4 font-medium">
                 <span>Created By: <strong className="text-slate-800">{post.createdBy}</strong></span>
                 <span>Date: <strong className="text-slate-800">{new Date(post.createdAt).toLocaleDateString()}</strong></span>

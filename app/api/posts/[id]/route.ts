@@ -43,14 +43,22 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, imageUrl, facebookUrl, instagramUrl, linkedinUrl, xUrl } =
+    const { title, imageUrl, caption, facebookUrl, instagramUrl, linkedinUrl, xUrl } =
       await request.json();
+
+    if (caption && caption.length > 5000) {
+      return NextResponse.json(
+        { error: 'Caption exceeds maximum character limit of 5000 characters' },
+        { status: 400 }
+      );
+    }
 
     const updatedPost = await prisma.post.update({
       where: { id: params.id },
       data: {
         title: title?.trim(),
         imageUrl: imageUrl?.trim(),
+        caption: caption !== undefined ? caption.trim() || null : undefined,
         facebookUrl: facebookUrl !== undefined ? facebookUrl.trim() || null : undefined,
         instagramUrl: instagramUrl !== undefined ? instagramUrl.trim() || null : undefined,
         linkedinUrl: linkedinUrl !== undefined ? linkedinUrl.trim() || null : undefined,

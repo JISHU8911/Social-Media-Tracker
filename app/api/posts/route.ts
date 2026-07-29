@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, imageUrl, facebookUrl, instagramUrl, linkedinUrl, xUrl } =
+    const { title, imageUrl, caption, facebookUrl, instagramUrl, linkedinUrl, xUrl } =
       await request.json();
 
     if (!title || !title.trim()) {
@@ -47,6 +47,13 @@ export async function POST(request: Request) {
 
     if (!imageUrl || !imageUrl.trim()) {
       return NextResponse.json({ error: 'Post image is required' }, { status: 400 });
+    }
+
+    if (caption && caption.length > 5000) {
+      return NextResponse.json(
+        { error: 'Caption exceeds maximum character limit of 5000 characters' },
+        { status: 400 }
+      );
     }
 
     // Generate unique tracking code
@@ -65,6 +72,7 @@ export async function POST(request: Request) {
       data: {
         title: title.trim(),
         imageUrl: imageUrl.trim(),
+        caption: caption?.trim() || null,
         facebookUrl: facebookUrl?.trim() || null,
         instagramUrl: instagramUrl?.trim() || null,
         linkedinUrl: linkedinUrl?.trim() || null,

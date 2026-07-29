@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check, X, MessageSquare } from 'lucide-react';
+import { Copy, Check, X, MessageSquare, AlignLeft } from 'lucide-react';
 
 interface Post {
   title: string;
+  imageUrl?: string | null;
+  caption?: string | null;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   linkedinUrl?: string | null;
@@ -19,7 +21,8 @@ interface WhatsAppModalProps {
 }
 
 export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalProps) {
-  const [copied, setCopied] = useState(false);
+  const [copiedMessage, setCopiedMessage] = useState(false);
+  const [copiedCaption, setCopiedCaption] = useState(false);
 
   if (!isOpen) return null;
 
@@ -28,6 +31,10 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
 
   let formattedMessage = `📢 NEW SOCIAL MEDIA POST\n\n${post.title.toUpperCase()}\n\n`;
 
+  if (post.caption && post.caption.trim()) {
+    formattedMessage += `📝 CAPTION:\n${post.caption.trim()}\n\n`;
+  }
+
   if (post.facebookUrl) formattedMessage += `Facebook:\n${post.facebookUrl}\n\n`;
   if (post.instagramUrl) formattedMessage += `Instagram:\n${post.instagramUrl}\n\n`;
   if (post.linkedinUrl) formattedMessage += `LinkedIn:\n${post.linkedinUrl}\n\n`;
@@ -35,13 +42,24 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
 
   formattedMessage += `After interacting with the post, please submit your engagement details here:\n\n${trackingLink}`;
 
-  const handleCopy = async () => {
+  const handleCopyMessage = async () => {
     try {
       await navigator.clipboard.writeText(formattedMessage);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      setCopiedMessage(true);
+      setTimeout(() => setCopiedMessage(false), 2500);
     } catch (err) {
       console.error('Failed to copy message:', err);
+    }
+  };
+
+  const handleCopyCaption = async () => {
+    if (!post.caption) return;
+    try {
+      await navigator.clipboard.writeText(post.caption);
+      setCopiedCaption(true);
+      setTimeout(() => setCopiedCaption(false), 2500);
+    } catch (err) {
+      console.error('Failed to copy caption:', err);
     }
   };
 
@@ -77,30 +95,54 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end space-x-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+        <div className="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-200 bg-slate-50">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold btn-secondary"
+            className="px-3.5 py-2 text-xs font-semibold btn-secondary"
           >
             Close
           </button>
+
+          {post.caption && post.caption.trim() && (
+            <button
+              onClick={handleCopyCaption}
+              className={`inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                copiedCaption
+                  ? 'bg-purple-50 text-purple-700 border-purple-300'
+                  : 'bg-white text-purple-700 hover:bg-purple-50 border-purple-200'
+              }`}
+            >
+              {copiedCaption ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Caption Copied!</span>
+                </>
+              ) : (
+                <>
+                  <AlignLeft className="h-3.5 w-3.5" />
+                  <span>Copy Caption</span>
+                </>
+              )}
+            </button>
+          )}
+
           <button
-            onClick={handleCopy}
-            className={`inline-flex items-center space-x-2 px-5 py-2 rounded-xl text-xs font-bold transition-all ${
-              copied
+            onClick={handleCopyMessage}
+            className={`inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              copiedMessage
                 ? 'bg-emerald-600 text-white'
-                : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm'
             }`}
           >
-            {copied ? (
+            {copiedMessage ? (
               <>
                 <Check className="h-4 w-4" />
-                <span>Copied to Clipboard!</span>
+                <span>Message Copied!</span>
               </>
             ) : (
               <>
                 <Copy className="h-4 w-4" />
-                <span>Copy Broadcast Message</span>
+                <span>Copy WhatsApp Message</span>
               </>
             )}
           </button>

@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Send,
   Sparkles,
+  AlignLeft,
 } from 'lucide-react';
 import DuplicateSubmissionModal from '@/components/DuplicateSubmissionModal';
 
@@ -19,6 +20,7 @@ interface PostData {
   id: string;
   title: string;
   imageUrl: string;
+  caption?: string | null;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   linkedinUrl?: string | null;
@@ -291,6 +293,19 @@ export default function EmployeeTrackingPage({
               <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
                 {post.title}
               </h2>
+
+              {/* Caption if present */}
+              {post.caption && (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center space-x-1">
+                    <AlignLeft className="h-3.5 w-3.5 text-cyan-600" />
+                    <span>Post Caption / Details</span>
+                  </span>
+                  <p className="text-xs sm:text-sm text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
+                    {post.caption}
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">

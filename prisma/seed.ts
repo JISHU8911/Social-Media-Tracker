@@ -27,15 +27,15 @@ async function main() {
 
   // 1. Idempotent Super Admin creation/check
   const existingSuperAdmin = await prisma.user.findUnique({
-    where: { email: superAdminEmail },
+    where: { email: superAdminEmail! },
   });
 
   if (!existingSuperAdmin) {
-    const passwordHash = await bcrypt.hash(superAdminPassword, 10);
+    const passwordHash = await bcrypt.hash(superAdminPassword!, 10);
     await prisma.user.create({
       data: {
-        name: superAdminName,
-        email: superAdminEmail,
+        name: superAdminName!,
+        email: superAdminEmail!,
         passwordHash,
         role: 'SUPER_ADMIN',
         active: true,
