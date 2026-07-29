@@ -38,15 +38,32 @@ export async function POST(request: Request) {
 
     // 1. Cloud Vercel Blob Storage (Production on Vercel)
     if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const blob = await put(`uploads/${filename}`, file, {
-        access: 'public',
-      });
+      try {
+        const blob = await put(`uploads/${filename}`, file, {
+          access: 'public',
+        });
 
-      return NextResponse.json({
-        message: 'Upload to Vercel Blob successful',
-        url: blob.url,
-        filename,
-      });
+        return NextResponse.json({
+          message: 'Upload to Vercel Blob successful',
+          url: blob.url,
+          filename,
+        });
+      } catch (blobError: any) {
+        console.error('Vercel Blob Upload Error:', blobError);
+        if (
+          blobError?.message?.includes('private store') ||
+          blobError?.message?.includes('public access')
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                'Vercel Blob Configuration Error: Cannot use public access on a private store. Please recreate your Vercel Blob store as a Public Store in the Vercel Dashboard (Storage -> Create -> Vercel Blob -> Select Public Access).',
+            },
+            { status: 400 }
+          );
+        }
+        throw blobError;
+      }
     }
 
     // 2. Local Filesystem Fallback (Local Server / VPS)
@@ -70,10 +87,10 @@ export async function POST(request: Request) {
       url: publicUrl,
       filename,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('File upload error:', error);
     return NextResponse.json(
-      { error: 'Failed to process file upload' },
+      { error: error?.message || 'Failed to process file upload' },
       { status: 500 }
     );
   }
