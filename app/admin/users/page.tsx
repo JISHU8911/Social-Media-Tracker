@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 interface UserItem {
@@ -24,12 +26,14 @@ interface UserItem {
 export default function UserManagementPage() {
   const router = useRouter();
   const [users, setUsers] = useState<UserItem[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   // New admin form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<'ADMIN' | 'SUPER_ADMIN'>('ADMIN');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +51,9 @@ export default function UserManagementPage() {
         if (data?.user?.role !== 'SUPER_ADMIN') {
           alert('Access Restricted. Only Super Admins can manage users.');
           router.push('/admin');
+          return;
         }
+        setCurrentUser(data.user);
       })
       .catch(() => router.push('/admin/login'));
 
@@ -94,6 +100,11 @@ export default function UserManagementPage() {
   };
 
   const handleToggleActive = async (id: string, currentActive: boolean) => {
+    if (currentUser && id === currentUser.id) {
+      alert('Forbidden. You cannot deactivate your own Super Admin account.');
+      return;
+    }
+
     try {
       const res = await fetch('/api/users', {
         method: 'PUT',
@@ -101,7 +112,35 @@ export default function UserManagementPage() {
         body: JSON.stringify({ id, active: !currentActive }),
       });
 
-      if (!res.ok) throw new Error('Failed to update status');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update status');
+      loadUsers();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteUser = async (id: string, userName: string) => {
+    if (currentUser && id === currentUser.id) {
+      alert('Forbidden. You cannot delete your own Super Admin account.');
+      return;
+    }
+
+    if (
+      !confirm(
+        `Are you sure you want to delete user account "${userName}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/users?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete user account');
       loadUsers();
     } catch (err: any) {
       alert(err.message);
@@ -155,14 +194,24 @@ export default function UserManagementPage() {
               required
             />
 
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="px-4 py-2.5 rounded-xl sit-input text-xs sm:text-sm font-medium"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className="w-full pl-4 pr-10 py-2.5 rounded-xl sit-input text-xs sm:text-sm font-medium"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
 
             <select
               value={role}
@@ -212,62 +261,87 @@ export default function UserManagementPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
-                  {users.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3.5 px-6 space-y-0.5">
-                        <p className="font-bold text-slate-900">{u.name}</p>
-                        <p className="text-xs text-slate-500 font-mono">{u.email}</p>
-                      </td>
+                  {users.map((u) => {
+                    const isSelf = currentUser && u.id === currentUser.id;
 
-                      <td className="py-3.5 px-6 whitespace-nowrap">
-                        {u.role === 'SUPER_ADMIN' ? (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                            <ShieldCheck className="h-3 w-3" />
-                            <span>SUPER ADMIN</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
-                            <span>ADMIN</span>
-                          </span>
-                        )}
-                      </td>
+                    return (
+                      <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3.5 px-6 space-y-0.5">
+                          <div className="flex items-center space-x-2">
+                            <p className="font-bold text-slate-900">{u.name}</p>
+                            {isSelf && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-100 text-cyan-800 border border-cyan-200">
+                                Current Session
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500 font-mono">{u.email}</p>
+                        </td>
 
-                      <td className="py-3.5 px-6 whitespace-nowrap">
-                        {u.active ? (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="h-3 w-3" />
-                            <span>Active</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200">
-                            <XCircle className="h-3 w-3" />
-                            <span>Inactive</span>
-                          </span>
-                        )}
-                      </td>
+                        <td className="py-3.5 px-6 whitespace-nowrap">
+                          {u.role === 'SUPER_ADMIN' ? (
+                            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                              <ShieldCheck className="h-3 w-3" />
+                              <span>SUPER ADMIN</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
+                              <span>ADMIN</span>
+                            </span>
+                          )}
+                        </td>
 
-                      <td className="py-3.5 px-6 whitespace-nowrap text-xs text-slate-500">
-                        {new Date(u.createdAt).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </td>
+                        <td className="py-3.5 px-6 whitespace-nowrap">
+                          {u.active ? (
+                            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <CheckCircle2 className="h-3 w-3" />
+                              <span>Active</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                              <XCircle className="h-3 w-3" />
+                              <span>Inactive</span>
+                            </span>
+                          )}
+                        </td>
 
-                      <td className="py-3.5 px-6 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => handleToggleActive(u.id, u.active)}
-                          className={`text-xs font-semibold ${
-                            u.active
-                              ? 'text-amber-600 hover:underline'
-                              : 'text-emerald-600 hover:underline'
-                          }`}
-                        >
-                          {u.active ? 'Deactivate' : 'Activate'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="py-3.5 px-6 whitespace-nowrap text-xs text-slate-500">
+                          {new Date(u.createdAt).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </td>
+
+                        <td className="py-3.5 px-6 text-right whitespace-nowrap space-x-3">
+                          {isSelf ? (
+                            <span className="text-xs text-slate-400 font-semibold italic">
+                              Protected Self Session
+                            </span>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleToggleActive(u.id, u.active)}
+                                className={`text-xs font-semibold ${
+                                  u.active
+                                    ? 'text-amber-600 hover:underline'
+                                    : 'text-emerald-600 hover:underline'
+                                }`}
+                              >
+                                {u.active ? 'Deactivate' : 'Activate'}
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(u.id, u.name)}
+                                className="text-xs text-red-600 hover:underline font-semibold"
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

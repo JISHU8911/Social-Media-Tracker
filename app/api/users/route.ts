@@ -105,6 +105,22 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Super Admin Self-Protection Safeguards
+    if (id === session.id) {
+      if (active !== undefined && Boolean(active) === false) {
+        return NextResponse.json(
+          { error: 'Forbidden. You cannot deactivate your own Super Admin account.' },
+          { status: 400 }
+        );
+      }
+      if (role && role !== 'SUPER_ADMIN') {
+        return NextResponse.json(
+          { error: 'Forbidden. You cannot remove your own Super Admin role.' },
+          { status: 400 }
+        );
+      }
+    }
+
     const updateData: any = {};
     if (name) updateData.name = name.trim();
     if (email) updateData.email = email.toLowerCase().trim();
@@ -131,5 +147,39 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error('Error updating user:', error);
     return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
+  }
+}
+
+// DELETE user (Super Admin only)
+export async function DELETE(request: Request) {
+  try {
+    const session = await getServerSession();
+    if (!session || session.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden. Super Admin access required.' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'User ID parameter is required' }, { status: 400 });
+    }
+
+    // Super Admin Self-Protection Safeguard
+    if (id === session.id) {
+      return NextResponse.json(
+        { error: 'Forbidden. You cannot delete your own Super Admin account.' },
+        { status: 400 }
+      );
+    }
+
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: 'User account deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return NextResponse.json({ error: 'Failed to delete user account' }, { status: 500 });
   }
 }

@@ -3,34 +3,56 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, Mail, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, User, AlertCircle, CheckCircle2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
-export default function AdminLoginPage() {
+export default function AdminSignUpPage() {
   const router = useRouter();
+
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      setError('Password and Confirm Password do not match.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          confirmPassword,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Invalid credentials');
+        throw new Error(data.error || 'Failed to create account');
       }
 
-      router.push('/admin');
+      setSuccess(data.message || 'Account created successfully! Redirecting to login...');
+      setTimeout(() => {
+        router.push('/admin/login');
+      }, 2000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -48,10 +70,10 @@ export default function AdminLoginPage() {
           </div>
           <div className="space-y-1">
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              Social Interaction Tracker
+              Create an Account
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              Employee Social Engagement Management Platform
+              Join Social Interaction Tracker Platform
             </p>
           </div>
         </div>
@@ -66,10 +88,38 @@ export default function AdminLoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          {success && (
+            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium flex items-center space-x-2">
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+              <span>{success}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSignUp} className="space-y-4">
+            {/* Full Name */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Email Address
+                Full Name <span className="text-cyan-600">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <User className="h-4 w-4" />
+                </div>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Rahul Sharma"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl sit-input text-xs sm:text-sm font-medium"
+                />
+              </div>
+            </div>
+
+            {/* Email Address */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Email Address <span className="text-cyan-600">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -86,9 +136,10 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
+            {/* Password */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Password
+                Password <span className="text-cyan-600">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -99,6 +150,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  minLength={6}
                   required
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl sit-input text-xs sm:text-sm font-medium"
                 />
@@ -117,6 +169,39 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
+            {/* Confirm Password */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Confirm Password <span className="text-cyan-600">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  minLength={6}
+                  required
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl sit-input text-xs sm:text-sm font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
             <div className="pt-2">
               <button
                 type="submit"
@@ -124,10 +209,10 @@ export default function AdminLoginPage() {
                 className="w-full inline-flex items-center justify-center space-x-2 py-3 px-4 rounded-xl btn-primary text-xs sm:text-sm shadow-md disabled:opacity-50"
               >
                 {loading ? (
-                  <span>Signing in...</span>
+                  <span>Creating Account...</span>
                 ) : (
                   <>
-                    <span>Sign In</span>
+                    <span>Create Account</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -135,15 +220,15 @@ export default function AdminLoginPage() {
             </div>
           </form>
 
-          {/* Link to Sign Up */}
+          {/* Link to Login */}
           <div className="text-center pt-2 border-t border-slate-200">
             <p className="text-xs text-slate-500 font-medium">
-              Don&apos;t have an account?{' '}
+              Already have an account?{' '}
               <Link
-                href="/admin/signup"
+                href="/admin/login"
                 className="font-bold text-cyan-600 hover:text-cyan-700 hover:underline"
               >
-                Sign Up
+                Sign In
               </Link>
             </p>
           </div>

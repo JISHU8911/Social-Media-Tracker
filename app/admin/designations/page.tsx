@@ -7,6 +7,7 @@ import {
   Briefcase,
   Plus,
   Edit2,
+  Trash2,
   CheckCircle2,
   XCircle,
   AlertCircle,
@@ -92,6 +93,35 @@ export default function DesignationManagementPage() {
     }
   };
 
+  const handleDeleteDesignation = async (id: string, name: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete designation "${name}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/designations/${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(
+          data.error || 'Cannot delete designation because it is referenced by existing submissions.'
+        );
+      }
+
+      loadDesignations();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   const handleStartEdit = (desig: DesignationItem) => {
     setEditingId(desig.id);
     setEditingName(desig.designationName);
@@ -137,7 +167,7 @@ export default function DesignationManagementPage() {
           </h2>
 
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center space-x-2">
+            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center space-x-2">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -257,6 +287,14 @@ export default function DesignationManagementPage() {
                           }`}
                         >
                           {desig.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleDeleteDesignation(desig.id, desig.designationName)
+                          }
+                          className="text-xs text-red-600 hover:underline font-semibold"
+                        >
+                          Delete
                         </button>
                       </td>
                     </tr>
