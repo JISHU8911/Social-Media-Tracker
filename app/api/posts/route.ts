@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from '@/lib/auth';
+import { getServerSession, isOrgAdmin, isPlatformSuperAdmin } from '@/lib/auth';
 
 function generateTrackingCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -11,12 +11,34 @@ function generateTrackingCode(): string {
   return code;
 }
 
-// GET all posts
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const session = await getServerSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let where: any = {};
+    if (!isPlatformSuperAdmin(session)) {
+      if (!session.organizationId) {
+        return NextResponse.json([]);
+      }
+      where.organizationId = session.organizationId;
+    } else {
+      const { searchParams } = new URL(request.url);
+      const orgId = searchParams.get('organizationId');
+      if (orgId) {
+        where.organizationId = orgId;
+      }
+    }
+
     const posts = await prisma.post.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
+        organization: {
+          select: { name: true, orgId: true },
+        },
         _count: {
           select: { submissions: true },
         },
@@ -30,12 +52,14 @@ export async function GET() {
   }
 }
 
-// POST create post
 export async function POST(request: Request) {
   try {
     const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!isOrgAdmin(session) || !session?.organizationId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Only Organization Admins can create posts' },
+        { status: 403 }
+      );
     }
 
     const { title, imageUrl, caption, facebookUrl, instagramUrl, linkedinUrl, xUrl } =
@@ -56,7 +80,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate unique tracking code
     let trackingCode = generateTrackingCode();
     let isUnique = false;
     while (!isUnique) {
@@ -70,6 +93,7 @@ export async function POST(request: Request) {
 
     const newPost = await prisma.post.create({
       data: {
+        organizationId: session.organizationId,
         title: title.trim(),
         imageUrl: imageUrl.trim(),
         caption: caption?.trim() || null,

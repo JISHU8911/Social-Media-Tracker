@@ -7,53 +7,127 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum OrgStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+model Organization {
+  id            String                   @id @default(uuid())
+  orgId         String?                  @unique // e.g. "ORG-1001"
+  uniqueCode    String?                  @unique // e.g. "K8P2X9F4"
+  name          String
+  officialEmail String                   @unique
+  passwordHash  String?                  // Raw password hash stored during org signup before approval
+  status        OrgStatus                @default(PENDING)
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  users         User[]
+  memberships   OrganizationMembership[]
+  joinRequests  JoinRequest[]
+  designations  Designation[]
+  posts         Post[]
+  submissions   Submission[]
+}
+
 model User {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         String   @default("ADMIN") // "SUPER_ADMIN" or "ADMIN"
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  id             String                   @id @default(uuid())
+  name           String
+  email          String                   @unique
+  passwordHash   String
+  role           String                   @default("USER") // PLATFORM_SUPER_ADMIN | ORGANIZATION_SUPER_ADMIN | ORGANIZATION_ADMIN | MEMBER | USER
+  active         Boolean                  @default(true)
+  organizationId String?
+  organization   Organization?            @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt @default(now())
+  memberships    OrganizationMembership[]
+  joinRequests   JoinRequest[]
+  submissions    Submission[]
+}
+
+model OrganizationMembership {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  designationId  String?
+  designation    Designation? @relation(fields: [designationId], references: [id], onDelete: SetNull)
+  role           String       // ORGANIZATION_SUPER_ADMIN | ORGANIZATION_ADMIN | MEMBER
+  status         String       @default("ACTIVE") // ACTIVE | INACTIVE
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, userId])
+}
+
+model JoinRequest {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  designationId  String
+  designation    Designation  @relation(fields: [designationId], references: [id], onDelete: Cascade)
+  status         String       @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, userId])
 }
 
 model Designation {
-  id              String       @id @default(uuid())
-  designationName String       @unique
-  active          Boolean      @default(true)
-  createdAt       DateTime     @default(now())
+  id              String                   @id @default(uuid())
+  organizationId  String?
+  organization    Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  designationName String
+  active          Boolean                  @default(true)
+  createdAt       DateTime                 @default(now())
   submissions     Submission[]
+  memberships     OrganizationMembership[]
+  joinRequests    JoinRequest[]
+
+  @@unique([organizationId, designationName])
 }
 
 model Post {
-  id           String       @id @default(uuid())
-  title        String
-  imageUrl     String
-  caption      String?      // Multiline text up to 5000 chars
-  facebookUrl  String?
-  instagramUrl String?
-  linkedinUrl  String?
-  xUrl         String?
-  trackingCode String       @unique
-  createdBy    String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  submissions  Submission[]
+  id             String       @id @default(uuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  imageUrl       String
+  caption        String?      // Multiline text up to 5000 chars
+  facebookUrl    String?
+  instagramUrl   String?
+  linkedinUrl    String?
+  xUrl           String?
+  trackingCode   String       @unique
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  submissions    Submission[]
 }
 
 model Submission {
-  id               String      @id @default(uuid())
+  id               String       @id @default(uuid())
+  organizationId   String?
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId           String?
+  user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   postId           String
-  post             Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post             Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
   fullName         String
   designationId    String
-  designation      Designation @relation(fields: [designationId], references: [id])
-  facebookActions  String?     // Stored as JSON string array e.g. ["Like", "Comment"]
-  instagramActions String?     // Stored as JSON string array
-  linkedinActions  String?     // Stored as JSON string array
-  xActions         String?     // Stored as JSON string array
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  designation      Designation  @relation(fields: [designationId], references: [id], onDelete: Cascade)
+  facebookActions  String?      // Stored as JSON string array e.g. ["Like", "Comment"]
+  instagramActions String?      // Stored as JSON string array
+  linkedinActions  String?      // Stored as JSON string array
+  xActions         String?      // Stored as JSON string array
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@unique([postId, fullName, designationId], name: "unique_employee_post_submission")
 }

@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from '@/lib/auth';
+import { getServerSession, isPlatformSuperAdmin } from '@/lib/auth';
 
-// Helper name validator: at least two words, uppercase letters and spaces only
 function validateFullName(name: string): boolean {
   const trimmed = name.trim();
   const nameRegex = /^[A-Z]+(\s+[A-Z]+)+$/;
   return nameRegex.test(trimmed);
 }
 
-// POST create submission (Public or Admin)
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession();
     const {
       postId,
       fullName,
@@ -30,6 +29,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
     const formattedName = fullName.trim().toUpperCase();
 
     if (!validateFullName(formattedName)) {
@@ -42,7 +49,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check duplicate record
     const existing = await prisma.submission.findUnique({
       where: {
         unique_employee_post_submission: {
@@ -69,6 +75,9 @@ export async function POST(request: Request) {
     const liJson = JSON.stringify(linkedinActions || []);
     const xJson = JSON.stringify(xActions || []);
 
+    const orgId = post.organizationId || session?.organizationId || null;
+    const userId = session?.id || null;
+
     if (existing && forceUpdate) {
       const updated = await prisma.submission.update({
         where: { id: existing.id },
@@ -77,14 +86,18 @@ export async function POST(request: Request) {
           instagramActions: igJson,
           linkedinActions: liJson,
           xActions: xJson,
+          userId: userId || existing.userId,
+          organizationId: orgId || existing.organizationId,
         },
-        include: { designation: true },
+        include: { designation: true, post: true },
       });
       return NextResponse.json({ message: 'Submission updated successfully', submission: updated });
     }
 
     const created = await prisma.submission.create({
       data: {
+        organizationId: orgId,
+        userId: userId,
         postId,
         fullName: formattedName,
         designationId,
@@ -93,7 +106,7 @@ export async function POST(request: Request) {
         linkedinActions: liJson,
         xActions: xJson,
       },
-      include: { designation: true },
+      include: { designation: true, post: true },
     });
 
     return NextResponse.json(
@@ -106,15 +119,30 @@ export async function POST(request: Request) {
   }
 }
 
-// GET all submissions with filters (Admin/Super Admin)
 export async function GET(request: Request) {
   try {
+    const session = await getServerSession();
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('postId');
     const designationId = searchParams.get('designationId');
     const nameQuery = searchParams.get('name');
+    const myHistory = searchParams.get('myHistory') === 'true';
 
     const where: any = {};
+
+    if (myHistory) {
+      if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      where.userId = session.id;
+    } else {
+      if (session && !isPlatformSuperAdmin(session)) {
+        if (session.organizationId) {
+          where.organizationId = session.organizationId;
+        }
+      }
+    }
+
     if (postId) where.postId = postId;
     if (designationId) where.designationId = designationId;
     if (nameQuery) {
@@ -124,8 +152,19 @@ export async function GET(request: Request) {
     const submissions = await prisma.submission.findMany({
       where,
       include: {
-        post: { select: { title: true, trackingCode: true } },
+        post: {
+          select: {
+            title: true,
+            trackingCode: true,
+            imageUrl: true,
+            facebookUrl: true,
+            instagramUrl: true,
+            linkedinUrl: true,
+            xUrl: true,
+          },
+        },
         designation: true,
+        organization: { select: { name: true } },
       },
       orderBy: { updatedAt: 'desc' },
     });

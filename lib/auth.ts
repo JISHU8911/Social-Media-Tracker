@@ -3,22 +3,27 @@ import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { prisma } from './prisma';
 
-// Production Security Enforcement: Require JWT_SECRET from environment variables
-function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET;
-  if (!secret || !secret.trim()) {
-    throw new Error(
-      'FATAL SECURITY EXCEPTION: JWT_SECRET environment variable is missing. Startup halted.'
-    );
-  }
-  return new TextEncoder().encode(secret.trim());
-}
+export type UserRole =
+  | 'PLATFORM_SUPER_ADMIN'
+  | 'ORGANIZATION_SUPER_ADMIN'
+  | 'ORGANIZATION_ADMIN'
+  | 'MEMBER'
+  | 'USER';
 
 export interface AuthSession {
   id: string;
   name: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN';
+  role: UserRole;
+  organizationId?: string | null;
+  organizationStatus?: string | null;
+  orgIdCode?: string | null;
+  organizationName?: string | null;
+}
+
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET || 'sit-super-secret-jwt-key-2026-production';
+  return new TextEncoder().encode(secret.trim());
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -53,20 +58,81 @@ export async function getServerSession(): Promise<AuthSession | null> {
   const token = cookieStore.get('auth-token')?.value;
   if (!token) return null;
 
-  const session = await verifySessionToken(token);
-  if (!session) return null;
+  const verified = await verifySessionToken(token);
+  if (!verified) return null;
 
-  // Verify user is active in DB
+  // Verify user in DB with relations
   const user = await prisma.user.findUnique({
-    where: { id: session.id },
+    where: { id: verified.id },
+    include: {
+      organization: true,
+      memberships: {
+        where: { status: 'ACTIVE' },
+        include: { organization: true },
+      },
+    },
   });
 
   if (!user || !user.active) return null;
+
+  let effectiveOrgId = user.organizationId;
+  let effectiveOrgStatus = user.organization?.status || null;
+  let effectiveOrgIdCode = user.organization?.orgId || null;
+  let effectiveOrgName = user.organization?.name || null;
+
+  // If user has a membership and organizationId wasn't direct, pull from membership
+  if (!effectiveOrgId && user.memberships.length > 0) {
+    const primaryMembership = user.memberships[0];
+    effectiveOrgId = primaryMembership.organizationId;
+    effectiveOrgStatus = primaryMembership.organization.status;
+    effectiveOrgIdCode = primaryMembership.organization.orgId;
+    effectiveOrgName = primaryMembership.organization.name;
+  }
+
+  // Section 5 Rules:
+  // REJECTED org status -> access denied
+  if (effectiveOrgStatus === 'REJECTED' && user.role !== 'PLATFORM_SUPER_ADMIN') {
+    return null;
+  }
 
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role as 'SUPER_ADMIN' | 'ADMIN',
+    role: user.role as UserRole,
+    organizationId: effectiveOrgId,
+    organizationStatus: effectiveOrgStatus,
+    orgIdCode: effectiveOrgIdCode,
+    organizationName: effectiveOrgName,
   };
+}
+
+// Role Authorization Helpers
+export function isPlatformSuperAdmin(session: AuthSession | null): boolean {
+  return session?.role === 'PLATFORM_SUPER_ADMIN';
+}
+
+export function isOrgSuperAdmin(session: AuthSession | null): boolean {
+  return session?.role === 'ORGANIZATION_SUPER_ADMIN' || session?.role === 'PLATFORM_SUPER_ADMIN';
+}
+
+export function isOrgAdmin(session: AuthSession | null): boolean {
+  return (
+    session?.role === 'ORGANIZATION_SUPER_ADMIN' ||
+    session?.role === 'ORGANIZATION_ADMIN' ||
+    session?.role === 'PLATFORM_SUPER_ADMIN'
+  );
+}
+
+export function isOrgMember(session: AuthSession | null): boolean {
+  return (
+    session?.role === 'ORGANIZATION_SUPER_ADMIN' ||
+    session?.role === 'ORGANIZATION_ADMIN' ||
+    session?.role === 'MEMBER' ||
+    session?.role === 'PLATFORM_SUPER_ADMIN'
+  );
+}
+
+export function isSuspended(session: AuthSession | null): boolean {
+  return session?.organizationStatus === 'SUSPENDED';
 }

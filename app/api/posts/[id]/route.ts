@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from '@/lib/auth';
+import { getServerSession, isOrgAdmin, isPlatformSuperAdmin } from '@/lib/auth';
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession();
     const post = await prisma.post.findUnique({
       where: { id: params.id },
       include: {
+        organization: { select: { id: true, name: true, orgId: true } },
         submissions: {
           include: {
             designation: true,
@@ -26,6 +28,19 @@ export async function GET(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
+    // Verify Org access if user logged in
+    if (
+      session &&
+      !isPlatformSuperAdmin(session) &&
+      post.organizationId &&
+      session.organizationId !== post.organizationId
+    ) {
+      return NextResponse.json(
+        { error: 'Access denied: Post belongs to another organization' },
+        { status: 403 }
+      );
+    }
+
     return NextResponse.json(post);
   } catch (error) {
     console.error('Error fetching post:', error);
@@ -39,8 +54,17 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession();
-    if (!session) {
+    if (!isOrgAdmin(session)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const post = await prisma.post.findUnique({ where: { id: params.id } });
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    if (!isPlatformSuperAdmin(session) && post.organizationId !== session.organizationId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     const { title, imageUrl, caption, facebookUrl, instagramUrl, linkedinUrl, xUrl } =
@@ -79,11 +103,17 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession();
-    if (!session || session.role !== 'SUPER_ADMIN') {
-      return NextResponse.json(
-        { error: 'Forbidden. Only Super Admins can delete posts.' },
-        { status: 403 }
-      );
+    if (!isOrgAdmin(session)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const post = await prisma.post.findUnique({ where: { id: params.id } });
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    if (!isPlatformSuperAdmin(session) && post.organizationId !== session.organizationId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     await prisma.post.delete({

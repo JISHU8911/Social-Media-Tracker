@@ -1,38 +1,60 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession, isPlatformSuperAdmin } from '@/lib/auth';
 
 export async function GET() {
   try {
-    let totalPosts = 0;
-    let submissions: any[] = [];
-    let postsWithCounts: any[] = [];
-
-    try {
-      totalPosts = await prisma.post.count();
-      submissions = await prisma.submission.findMany({
-        include: {
-          post: { select: { title: true, trackingCode: true } },
-          designation: true,
-        },
-      });
-
-      postsWithCounts = await prisma.post.findMany({
-        select: {
-          id: true,
-          title: true,
-          trackingCode: true,
-          _count: { select: { submissions: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      });
-    } catch (dbError) {
-      console.warn('Database query fallback in analytics route:', dbError);
+    const session = await getServerSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const totalSubmissions = submissions.length;
+    let whereOrg: any = {};
+    if (!isPlatformSuperAdmin(session)) {
+      if (!session.organizationId) {
+        return NextResponse.json({
+          summary: {
+            totalPosts: 0,
+            totalSubmissions: 0,
+            totalEmployeesParticipated: 0,
+            totalInteractions: 0,
+          },
+          platformData: [
+            { name: 'Facebook', count: 0 },
+            { name: 'Instagram', count: 0 },
+            { name: 'LinkedIn', count: 0 },
+            { name: 'X (Twitter)', count: 0 },
+          ],
+          interactionData: [],
+          postMetrics: [],
+        });
+      }
+      whereOrg = { organizationId: session.organizationId };
+    }
 
-    // Unique employees (by full name)
+    const totalPosts = await prisma.post.count({ where: whereOrg });
+
+    const submissions = await prisma.submission.findMany({
+      where: whereOrg,
+      include: {
+        post: { select: { title: true, trackingCode: true } },
+        designation: true,
+      },
+    });
+
+    const postsWithCounts = await prisma.post.findMany({
+      where: whereOrg,
+      select: {
+        id: true,
+        title: true,
+        trackingCode: true,
+        _count: { select: { submissions: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    const totalSubmissions = submissions.length;
     const uniqueEmployeesSet = new Set(submissions.map((s) => s.fullName));
     const totalEmployeesParticipated = uniqueEmployeesSet.size;
 
@@ -88,7 +110,6 @@ export async function GET() {
       });
     });
 
-    // Breakdown per platform
     const platformData = [
       { name: 'Facebook', count: facebookSubmissions },
       { name: 'Instagram', count: instagramSubmissions },
@@ -96,7 +117,6 @@ export async function GET() {
       { name: 'X (Twitter)', count: xSubmissions },
     ];
 
-    // Breakdown per interaction type
     const interactionData = Object.entries(actionCounts).map(([name, count]) => ({
       name,
       count,

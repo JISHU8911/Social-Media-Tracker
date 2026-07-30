@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyPassword, createSessionToken } from '@/lib/auth';
+import { verifyPassword, createSessionToken, UserRole } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -13,13 +13,22 @@ export async function POST(request: Request) {
       );
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: cleanEmail },
+      include: {
+        organization: true,
+        memberships: {
+          where: { status: 'ACTIVE' },
+          include: { organization: true },
+        },
+      },
     });
 
     if (!user || !user.active) {
       return NextResponse.json(
-        { error: 'Invalid credentials or inactive account' },
+        { error: 'Invalid email or password' },
         { status: 401 }
       );
     }
@@ -27,8 +36,31 @@ export async function POST(request: Request) {
     const isValidPassword = await verifyPassword(password, user.passwordHash);
     if (!isValidPassword) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { error: 'Invalid email or password' },
         { status: 401 }
+      );
+    }
+
+    let effectiveOrgId = user.organizationId;
+    let effectiveOrgStatus = user.organization?.status || null;
+    let effectiveOrgIdCode = user.organization?.orgId || null;
+    let effectiveOrgName = user.organization?.name || null;
+
+    if (!effectiveOrgId && user.memberships.length > 0) {
+      const primaryMembership = user.memberships[0];
+      effectiveOrgId = primaryMembership.organizationId;
+      effectiveOrgStatus = primaryMembership.organization.status;
+      effectiveOrgIdCode = primaryMembership.organization.orgId;
+      effectiveOrgName = primaryMembership.organization.name;
+    }
+
+    // Section 5 Rules:
+    // PENDING org access blocked if user is trying to access pending org dashboard
+    // REJECTED org access denied
+    if (effectiveOrgStatus === 'REJECTED' && user.role !== 'PLATFORM_SUPER_ADMIN') {
+      return NextResponse.json(
+        { error: 'Access denied: Organization registration was rejected.' },
+        { status: 403 }
       );
     }
 
@@ -36,7 +68,11 @@ export async function POST(request: Request) {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role as 'SUPER_ADMIN' | 'ADMIN',
+      role: user.role as UserRole,
+      organizationId: effectiveOrgId,
+      organizationStatus: effectiveOrgStatus,
+      orgIdCode: effectiveOrgIdCode,
+      organizationName: effectiveOrgName,
     };
 
     const token = await createSessionToken(sessionPayload);

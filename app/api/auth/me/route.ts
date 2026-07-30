@@ -6,6 +6,5 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ user: null }, { status: 401 });
   }
-
   return NextResponse.json({ user: session });
 }

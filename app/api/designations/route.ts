@@ -1,14 +1,26 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from '@/lib/auth';
+import { getServerSession, isOrgAdmin } from '@/lib/auth';
 
-// GET all designations (Active only by default unless includeInactive parameter set)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const targetOrgId = searchParams.get('organizationId');
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
-    const where = includeInactive ? {} : { active: true };
+    const session = await getServerSession();
+    const effectiveOrgId = session?.organizationId || targetOrgId;
+
+    if (!effectiveOrgId) {
+      return NextResponse.json([]);
+    }
+
+    const where: any = {
+      organizationId: effectiveOrgId,
+    };
+    if (!includeInactive) {
+      where.active = true;
+    }
 
     const designations = await prisma.designation.findMany({
       where,
@@ -22,12 +34,11 @@ export async function GET(request: Request) {
   }
 }
 
-// POST new designation (Admin / Super Admin)
 export async function POST(request: Request) {
   try {
     const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!isOrgAdmin(session) || !session?.organizationId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     const { designationName } = await request.json();
@@ -37,25 +48,31 @@ export async function POST(request: Request) {
 
     const formattedName = designationName.trim().toUpperCase();
 
-    // Check existing
-    const existing = await prisma.designation.findUnique({
-      where: { designationName: formattedName },
+    // Check existing within organization
+    const existing = await prisma.designation.findFirst({
+      where: {
+        organizationId: session.organizationId,
+        designationName: formattedName,
+      },
     });
 
     if (existing) {
       if (!existing.active) {
-        // Reactivate
         const reactivated = await prisma.designation.update({
           where: { id: existing.id },
           data: { active: true },
         });
         return NextResponse.json(reactivated);
       }
-      return NextResponse.json({ error: 'Designation already exists' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Designation already exists in your organization' },
+        { status: 400 }
+      );
     }
 
     const created = await prisma.designation.create({
       data: {
+        organizationId: session.organizationId,
         designationName: formattedName,
         active: true,
       },
@@ -65,38 +82,5 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error creating designation:', error);
     return NextResponse.json({ error: 'Failed to create designation' }, { status: 500 });
-  }
-}
-
-// PUT edit or deactivate designation
-export async function PUT(request: Request) {
-  try {
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { id, designationName, active } = await request.json();
-    if (!id) {
-      return NextResponse.json({ error: 'Designation ID is required' }, { status: 400 });
-    }
-
-    const updateData: any = {};
-    if (designationName !== undefined) {
-      updateData.designationName = designationName.trim().toUpperCase();
-    }
-    if (active !== undefined) {
-      updateData.active = Boolean(active);
-    }
-
-    const updated = await prisma.designation.update({
-      where: { id },
-      data: updateData,
-    });
-
-    return NextResponse.json(updated);
-  } catch (error) {
-    console.error('Error updating designation:', error);
-    return NextResponse.json({ error: 'Failed to update designation' }, { status: 500 });
   }
 }
