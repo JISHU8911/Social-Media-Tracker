@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession, isOrgAdmin, isPlatformSuperAdmin } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -54,7 +56,7 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession();
-    if (!isOrgAdmin(session)) {
+    if (!session || !isOrgAdmin(session)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -63,7 +65,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (!isPlatformSuperAdmin(session) && post.organizationId !== session.organizationId) {
+    if (!isPlatformSuperAdmin(session) && post.organizationId !== session?.organizationId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -103,7 +105,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession();
-    if (!isOrgAdmin(session)) {
+    if (!session || !isOrgAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -112,7 +114,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (!isPlatformSuperAdmin(session) && post.organizationId !== session.organizationId) {
+    if (!isPlatformSuperAdmin(session) && post.organizationId !== session?.organizationId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession, hashPassword } from '@/lib/auth';
+import { getServerSession, hashPassword, isPlatformSuperAdmin } from '@/lib/auth';
 
-// GET list users (Super Admin only)
 export async function GET() {
   try {
     const session = await getServerSession();
-    if (!session || session.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Super Admin access required.' }, { status: 403 });
+    if (!isPlatformSuperAdmin(session)) {
+      return NextResponse.json({ error: 'Forbidden. Platform Super Admin access required.' }, { status: 403 });
     }
 
     const users = await prisma.user.findMany({
@@ -29,12 +28,11 @@ export async function GET() {
   }
 }
 
-// POST create admin (Super Admin only)
 export async function POST(request: Request) {
   try {
     const session = await getServerSession();
-    if (!session || session.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Super Admin access required.' }, { status: 403 });
+    if (!isPlatformSuperAdmin(session)) {
+      return NextResponse.json({ error: 'Forbidden. Platform Super Admin access required.' }, { status: 403 });
     }
 
     const { name, email, password, role } = await request.json();
@@ -66,7 +64,7 @@ export async function POST(request: Request) {
         name: name.trim(),
         email: formattedEmail,
         passwordHash,
-        role: role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'ADMIN',
+        role: role || 'USER',
         active: true,
       },
       select: {
@@ -86,12 +84,11 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT edit user / toggle active status (Super Admin only)
 export async function PUT(request: Request) {
   try {
     const session = await getServerSession();
-    if (!session || session.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Super Admin access required.' }, { status: 403 });
+    if (!isPlatformSuperAdmin(session)) {
+      return NextResponse.json({ error: 'Forbidden. Platform Super Admin access required.' }, { status: 403 });
     }
 
     const { id, name, email, active, password, role } = await request.json();
@@ -105,17 +102,17 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Super Admin Self-Protection Safeguards
-    if (id === session.id) {
+    // Platform Super Admin Protection Safeguards
+    if (targetUser.role === 'PLATFORM_SUPER_ADMIN') {
       if (active !== undefined && Boolean(active) === false) {
         return NextResponse.json(
-          { error: 'Forbidden. You cannot deactivate your own Super Admin account.' },
+          { error: 'Forbidden. You cannot deactivate Platform Super Admin account.' },
           { status: 400 }
         );
       }
-      if (role && role !== 'SUPER_ADMIN') {
+      if (role && role !== 'PLATFORM_SUPER_ADMIN') {
         return NextResponse.json(
-          { error: 'Forbidden. You cannot remove your own Super Admin role.' },
+          { error: 'Forbidden. You cannot remove Platform Super Admin role.' },
           { status: 400 }
         );
       }
@@ -125,7 +122,7 @@ export async function PUT(request: Request) {
     if (name) updateData.name = name.trim();
     if (email) updateData.email = email.toLowerCase().trim();
     if (active !== undefined) updateData.active = Boolean(active);
-    if (role && (role === 'SUPER_ADMIN' || role === 'ADMIN')) updateData.role = role;
+    if (role) updateData.role = role;
     if (password && password.trim()) {
       updateData.passwordHash = await hashPassword(password.trim());
     }
@@ -150,12 +147,11 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE user (Super Admin only)
 export async function DELETE(request: Request) {
   try {
     const session = await getServerSession();
-    if (!session || session.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden. Super Admin access required.' }, { status: 403 });
+    if (!isPlatformSuperAdmin(session)) {
+      return NextResponse.json({ error: 'Forbidden. Platform Super Admin access required.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -165,10 +161,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'User ID parameter is required' }, { status: 400 });
     }
 
-    // Super Admin Self-Protection Safeguard
-    if (id === session.id) {
+    const targetUser = await prisma.user.findUnique({ where: { id } });
+    if (targetUser?.role === 'PLATFORM_SUPER_ADMIN' || id === session?.id) {
       return NextResponse.json(
-        { error: 'Forbidden. You cannot delete your own Super Admin account.' },
+        { error: 'Forbidden. Cannot delete Platform Super Admin account.' },
         { status: 400 }
       );
     }
