@@ -38,6 +38,26 @@ export default function UserProfilePage() {
       const data = await res.json();
       if (res.ok && data.user) {
         setUser(data.user);
+        const role = data.user.role;
+        const orgId = data.user.organizationId;
+
+        if (role === 'PLATFORM_SUPER_ADMIN' || role === 'SUPER_ADMIN') {
+          router.push('/super-admin');
+          return;
+        }
+        if (
+          role === 'ORGANIZATION_SUPER_ADMIN' ||
+          role === 'ORGANIZATION_ADMIN' ||
+          role === 'ADMIN' ||
+          Boolean(orgId)
+        ) {
+          router.push('/admin');
+          return;
+        }
+        if (role === 'MEMBER') {
+          router.push('/member');
+          return;
+        }
       } else {
         router.push('/login');
       }

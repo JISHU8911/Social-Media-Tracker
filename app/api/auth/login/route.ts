@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyPassword, createSessionToken, UserRole } from '@/lib/auth';
+import { verifyPassword, hashPassword, createSessionToken, UserRole } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +33,27 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValidPassword = await verifyPassword(password, user.passwordHash);
+    let isValidPassword = await verifyPassword(password, user.passwordHash);
+
+    // Fallback sync for Super Admin if SUPER_ADMIN_PASSWORD env variable is set on Vercel/server
+    const isSuperAdminEmail =
+      cleanEmail === (process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim() || 'admin@sit.com');
+
+    if (
+      !isValidPassword &&
+      (isSuperAdminEmail || user.role === 'PLATFORM_SUPER_ADMIN' || user.role === 'SUPER_ADMIN')
+    ) {
+      const envSuperAdminPass = process.env.SUPER_ADMIN_PASSWORD?.trim();
+      if (envSuperAdminPass && password === envSuperAdminPass) {
+        isValidPassword = true;
+        const newHash = await hashPassword(password);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { passwordHash: newHash, role: 'PLATFORM_SUPER_ADMIN' },
+        });
+      }
+    }
+
     if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
@@ -55,9 +75,8 @@ export async function POST(request: Request) {
     }
 
     // Section 5 Rules:
-    // PENDING org access blocked if user is trying to access pending org dashboard
     // REJECTED org access denied
-    if (effectiveOrgStatus === 'REJECTED' && user.role !== 'PLATFORM_SUPER_ADMIN') {
+    if (effectiveOrgStatus === 'REJECTED' && user.role !== 'PLATFORM_SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
       return NextResponse.json(
         { error: 'Access denied: Organization registration was rejected.' },
         { status: 403 }

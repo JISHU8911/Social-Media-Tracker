@@ -33,6 +33,7 @@ export default function Navbar() {
     name: string;
     email: string;
     role: string;
+    organizationId?: string | null;
     organizationName?: string | null;
     orgIdCode?: string | null;
   } | null>(null);
@@ -109,7 +110,7 @@ export default function Navbar() {
   // Build role-aware navigation links
   let navItems: { href: string; label: string; icon: any }[] = [];
 
-  if (user?.role === 'PLATFORM_SUPER_ADMIN') {
+  if (user?.role === 'PLATFORM_SUPER_ADMIN' || user?.role === 'SUPER_ADMIN') {
     navItems = [
       { href: '/super-admin', label: 'Super Admin HQ', icon: ShieldAlert },
       { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -119,7 +120,9 @@ export default function Navbar() {
     ];
   } else if (
     user?.role === 'ORGANIZATION_SUPER_ADMIN' ||
-    user?.role === 'ORGANIZATION_ADMIN'
+    user?.role === 'ORGANIZATION_ADMIN' ||
+    user?.role === 'ADMIN' ||
+    Boolean(user?.organizationId)
   ) {
     navItems = [
       { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -145,7 +148,10 @@ export default function Navbar() {
   const isOrgAdminUser =
     user?.role === 'ORGANIZATION_SUPER_ADMIN' ||
     user?.role === 'ORGANIZATION_ADMIN' ||
-    user?.role === 'PLATFORM_SUPER_ADMIN';
+    user?.role === 'PLATFORM_SUPER_ADMIN' ||
+    user?.role === 'SUPER_ADMIN' ||
+    user?.role === 'ADMIN' ||
+    Boolean(user?.organizationId);
 
   return (
     <header className="sticky top-0 z-40 w-full bg-slate-950/90 backdrop-blur-md border-b border-slate-800 shadow-md">

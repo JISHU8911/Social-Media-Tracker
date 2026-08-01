@@ -10,13 +10,14 @@ async function main() {
   const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.trim() || 'admin@sit.com';
   const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD?.trim() || 'Admin123!';
 
-  // 1. Idempotent Platform Super Admin creation
+  // 1. Idempotent Platform Super Admin creation & password sync
   const existingSuperAdmin = await prisma.user.findUnique({
     where: { email: superAdminEmail },
   });
 
+  const passwordHash = await bcrypt.hash(superAdminPassword, 10);
+
   if (!existingSuperAdmin) {
-    const passwordHash = await bcrypt.hash(superAdminPassword, 10);
     await prisma.user.create({
       data: {
         name: superAdminName,
@@ -28,12 +29,17 @@ async function main() {
     });
     console.log(`✅ Successfully created Platform Super Admin: ${superAdminEmail}`);
   } else {
-    // Ensure role is PLATFORM_SUPER_ADMIN
+    // Ensure role is PLATFORM_SUPER_ADMIN and update password hash to match environment variable
     await prisma.user.update({
       where: { email: superAdminEmail },
-      data: { role: 'PLATFORM_SUPER_ADMIN', active: true },
+      data: {
+        name: superAdminName,
+        role: 'PLATFORM_SUPER_ADMIN',
+        active: true,
+        passwordHash,
+      },
     });
-    console.log(`ℹ️ Updated Platform Super Admin account: ${superAdminEmail}`);
+    console.log(`ℹ️ Successfully updated Platform Super Admin password & role: ${superAdminEmail}`);
   }
 
   console.log('✅ Database seeding completed successfully.');

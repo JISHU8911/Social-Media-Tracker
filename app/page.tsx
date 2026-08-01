@@ -1,4 +1,8 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Share2,
   Building2,
@@ -17,6 +21,34 @@ import {
 } from 'lucide-react';
 
 export default function LandingPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) {
+          setUser(data.user);
+          const role = data.user.role;
+          const orgId = data.user.organizationId;
+          if (role === 'PLATFORM_SUPER_ADMIN' || role === 'SUPER_ADMIN') {
+            router.push('/super-admin');
+          } else if (
+            role === 'ORGANIZATION_SUPER_ADMIN' ||
+            role === 'ORGANIZATION_ADMIN' ||
+            role === 'ADMIN' ||
+            Boolean(orgId)
+          ) {
+            router.push('/admin');
+          } else if (role === 'MEMBER') {
+            router.push('/member');
+          }
+        }
+      })
+      .catch(() => {});
+  }, [router]);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
       {/* Background Glow Overlay */}
@@ -46,18 +78,40 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="px-5 py-2.5 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-all text-sm"
-            >
-              Login
-            </Link>
-            <Link
-              href="/register-organization"
-              className="px-5 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-md shadow-indigo-500/25 transition-all text-sm flex items-center gap-2"
-            >
-              Register Organization <ArrowRight className="w-4 h-4" />
-            </Link>
+            {user ? (
+              <Link
+                href={
+                  user.role === 'PLATFORM_SUPER_ADMIN' || user.role === 'SUPER_ADMIN'
+                    ? '/super-admin'
+                    : user.role === 'ORGANIZATION_SUPER_ADMIN' ||
+                      user.role === 'ORGANIZATION_ADMIN' ||
+                      user.role === 'ADMIN' ||
+                      user.organizationId
+                    ? '/admin'
+                    : user.role === 'MEMBER'
+                    ? '/member'
+                    : '/profile'
+                }
+                className="px-5 py-2.5 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md text-sm flex items-center gap-2"
+              >
+                <LayoutDashboard className="w-4 h-4" /> Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-5 py-2.5 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-all text-sm"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register-organization"
+                  className="px-5 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-md shadow-indigo-500/25 transition-all text-sm flex items-center gap-2"
+                >
+                  Register Organization <ArrowRight className="w-4 h-4" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -81,18 +135,40 @@ export default function LandingPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/register-organization"
-            className="w-full sm:w-auto px-8 py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 shadow-xl shadow-indigo-600/30 transition-all text-base flex items-center justify-center gap-3 transform hover:-translate-y-0.5"
-          >
-            Get Started <ArrowRight className="w-5 h-5" />
-          </Link>
-          <Link
-            href="/signup"
-            className="w-full sm:w-auto px-8 py-4 rounded-xl font-semibold text-slate-200 bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:border-slate-700 transition-all text-base flex items-center justify-center gap-2"
-          >
-            <Users className="w-5 h-5 text-indigo-400" /> Sign Up as Member
-          </Link>
+          {user ? (
+            <Link
+              href={
+                user.role === 'PLATFORM_SUPER_ADMIN' || user.role === 'SUPER_ADMIN'
+                  ? '/super-admin'
+                  : user.role === 'ORGANIZATION_SUPER_ADMIN' ||
+                    user.role === 'ORGANIZATION_ADMIN' ||
+                    user.role === 'ADMIN' ||
+                    user.organizationId
+                  ? '/admin'
+                  : user.role === 'MEMBER'
+                  ? '/member'
+                  : '/profile'
+              }
+              className="w-full sm:w-auto px-8 py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 shadow-xl shadow-indigo-600/30 transition-all text-base flex items-center justify-center gap-3 transform hover:-translate-y-0.5"
+            >
+              Open Dashboard <ArrowRight className="w-5 h-5" />
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/register-organization"
+                className="w-full sm:w-auto px-8 py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 shadow-xl shadow-indigo-600/30 transition-all text-base flex items-center justify-center gap-3 transform hover:-translate-y-0.5"
+              >
+                Get Started <ArrowRight className="w-5 h-5" />
+              </Link>
+              <Link
+                href="/signup"
+                className="w-full sm:w-auto px-8 py-4 rounded-xl font-semibold text-slate-200 bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:border-slate-700 transition-all text-base flex items-center justify-center gap-2"
+              >
+                <Users className="w-5 h-5 text-indigo-400" /> Sign Up as Member
+              </Link>
+            </>
+          )}
         </div>
       </section>
 

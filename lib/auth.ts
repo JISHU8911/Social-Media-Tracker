@@ -8,7 +8,9 @@ export type UserRole =
   | 'ORGANIZATION_SUPER_ADMIN'
   | 'ORGANIZATION_ADMIN'
   | 'MEMBER'
-  | 'USER';
+  | 'USER'
+  | 'SUPER_ADMIN'
+  | 'ADMIN';
 
 export interface AuthSession {
   id: string;
@@ -109,18 +111,24 @@ export async function getServerSession(): Promise<AuthSession | null> {
 
 // Role Authorization Helpers
 export function isPlatformSuperAdmin(session: AuthSession | null): boolean {
-  return session?.role === 'PLATFORM_SUPER_ADMIN';
+  return session?.role === 'PLATFORM_SUPER_ADMIN' || session?.role === 'SUPER_ADMIN';
 }
 
 export function isOrgSuperAdmin(session: AuthSession | null): boolean {
-  return session?.role === 'ORGANIZATION_SUPER_ADMIN' || session?.role === 'PLATFORM_SUPER_ADMIN';
+  return (
+    session?.role === 'ORGANIZATION_SUPER_ADMIN' ||
+    session?.role === 'PLATFORM_SUPER_ADMIN' ||
+    session?.role === 'SUPER_ADMIN'
+  );
 }
 
 export function isOrgAdmin(session: AuthSession | null): boolean {
   return (
     session?.role === 'ORGANIZATION_SUPER_ADMIN' ||
     session?.role === 'ORGANIZATION_ADMIN' ||
-    session?.role === 'PLATFORM_SUPER_ADMIN'
+    session?.role === 'PLATFORM_SUPER_ADMIN' ||
+    session?.role === 'SUPER_ADMIN' ||
+    session?.role === 'ADMIN'
   );
 }
 
@@ -129,7 +137,9 @@ export function isOrgMember(session: AuthSession | null): boolean {
     session?.role === 'ORGANIZATION_SUPER_ADMIN' ||
     session?.role === 'ORGANIZATION_ADMIN' ||
     session?.role === 'MEMBER' ||
-    session?.role === 'PLATFORM_SUPER_ADMIN'
+    session?.role === 'PLATFORM_SUPER_ADMIN' ||
+    session?.role === 'SUPER_ADMIN' ||
+    session?.role === 'ADMIN'
   );
 }
 

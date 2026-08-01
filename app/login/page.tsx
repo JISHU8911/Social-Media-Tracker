@@ -31,9 +31,16 @@ export default function LoginPage() {
       }
 
       const role = data.user?.role;
-      if (role === 'PLATFORM_SUPER_ADMIN') {
+      const orgId = data.user?.organizationId;
+
+      if (role === 'PLATFORM_SUPER_ADMIN' || role === 'SUPER_ADMIN') {
         router.push('/super-admin');
-      } else if (role === 'ORGANIZATION_SUPER_ADMIN' || role === 'ORGANIZATION_ADMIN') {
+      } else if (
+        role === 'ORGANIZATION_SUPER_ADMIN' ||
+        role === 'ORGANIZATION_ADMIN' ||
+        role === 'ADMIN' ||
+        Boolean(orgId)
+      ) {
         router.push('/admin');
       } else if (role === 'MEMBER') {
         router.push('/member');
