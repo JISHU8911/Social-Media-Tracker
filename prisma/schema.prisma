@@ -30,6 +30,7 @@ model Organization {
   designations  Designation[]
   posts         Post[]
   submissions   Submission[]
+  calendarEntries CalendarEntry[]
 }
 
 model User {
@@ -94,20 +95,22 @@ model Designation {
 }
 
 model Post {
-  id             String       @id @default(uuid())
+  id             String        @id @default(uuid())
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   title          String
   imageUrl       String
-  caption        String?      // Multiline text up to 5000 chars
+  mediaType      String        @default("IMAGE") // IMAGE | VIDEO
+  videoUrl       String?
+  caption        String?       // Multiline text up to 5000 chars
   facebookUrl    String?
   instagramUrl   String?
   linkedinUrl    String?
   xUrl           String?
-  trackingCode   String       @unique
+  trackingCode   String        @unique
   createdBy      String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   submissions    Submission[]
 }
 
@@ -131,3 +134,27 @@ model Submission {
 
   @@unique([postId, fullName, designationId], name: "unique_employee_post_submission")
 }
+
+model CalendarEntry {
+  id                 String       @id @default(uuid())
+  organizationId     String
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title              String
+  date               DateTime
+  targetTime         String       // e.g. "14:30"
+  status             String       @default("PLANNED") // PLANNED | POSTER_READY | POSTED | CANCELLED | DELAYED
+  creativeUrl        String?      // Image or Video URL for POSTER_READY
+  creativeType       String?      // IMAGE | VIDEO
+  actualPostedDate   DateTime?    // For POSTED
+  actualPostedTime   String?      // For POSTED
+  cancellationReason String?      // For CANCELLED
+  newDate            DateTime?    // For DELAYED
+  newTargetTime      String?      // For DELAYED
+  delayReason        String?      // For DELAYED
+  createdBy          String
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([organizationId, date])
+}
+

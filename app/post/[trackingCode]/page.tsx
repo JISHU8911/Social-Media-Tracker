@@ -20,6 +20,8 @@ interface PostData {
   id: string;
   title: string;
   imageUrl: string;
+  videoUrl?: string | null;
+  mediaType?: string | null;
   caption?: string | null;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
@@ -275,16 +277,22 @@ export default function EmployeeTrackingPage({
         {/* Post Card */}
         {post && (
           <div className="sit-card overflow-hidden shadow-md border-slate-200">
-            {/* Post Image */}
-            <div className="relative w-full h-64 sm:h-80 bg-slate-100 flex items-center justify-center overflow-hidden border-b border-slate-200">
-              {post.imageUrl ? (
+            {/* Post Media (Image or Video) */}
+            <div className="relative w-full min-h-[240px] sm:min-h-[320px] max-h-[450px] bg-slate-900 flex items-center justify-center overflow-hidden border-b border-slate-200">
+              {post.mediaType === 'VIDEO' || post.videoUrl ? (
+                <video
+                  src={post.videoUrl || post.imageUrl}
+                  controls
+                  className="w-full max-h-[450px] object-contain"
+                />
+              ) : post.imageUrl ? (
                 <img
                   src={post.imageUrl}
                   alt={post.title}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="text-slate-400 text-xs">No Image Available</div>
+                <div className="text-slate-400 text-xs">No Media Available</div>
               )}
             </div>
 

@@ -12,31 +12,52 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Check size limit: 10MB
-    const MAX_SIZE = 10 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
+    const isVideo = file.type.startsWith('video/') || 
+      ['.mp4', '.mov', '.webm'].some((ext) => file.name.toLowerCase().endsWith(ext));
+
+    const maxImageSize = 10 * 1024 * 1024; // 10MB
+    const maxVideoSize = 50 * 1024 * 1024; // 50MB
+    const maxAllowedSize = isVideo ? maxVideoSize : maxImageSize;
+
+    if (file.size > maxAllowedSize) {
       return NextResponse.json(
-        { error: 'File size exceeds maximum limit of 10 MB' },
+        {
+          error: isVideo
+            ? 'Video size exceeds maximum limit of 50 MB'
+            : 'Image size exceeds maximum limit of 10 MB',
+        },
         { status: 400 }
       );
     }
 
-    // Check allowed file types: JPG, PNG, WEBP
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedMimeTypes.includes(file.type)) {
+    const allowedImageMime = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const allowedVideoMime = ['video/mp4', 'video/quicktime', 'video/webm', 'video/mov'];
+
+    const fileExt = (path.extname(file.name) || '').toLowerCase();
+    const allowedImageExt = ['.jpg', '.jpeg', '.png', '.webp'];
+    const allowedVideoExt = ['.mp4', '.mov', '.webm'];
+
+    const isValidImage = allowedImageMime.includes(file.type) || allowedImageExt.includes(fileExt);
+    const isValidVideo = allowedVideoMime.includes(file.type) || allowedVideoExt.includes(fileExt);
+
+    if (!isValidImage && !isValidVideo) {
       return NextResponse.json(
-        { error: 'Invalid file format. Allowed formats: JPG, PNG, WEBP' },
+        {
+          error:
+            'Invalid file format. Allowed formats: Images (JPG, PNG, WEBP) or Videos (MP4, MOV, WEBM)',
+        },
         { status: 400 }
       );
     }
 
-    const ext = path.extname(file.name) || '.jpg';
+    const mediaType = isValidVideo ? 'VIDEO' : 'IMAGE';
+    const ext = fileExt || (mediaType === 'VIDEO' ? '.mp4' : '.jpg');
     const safeBaseName = path
       .basename(file.name, ext)
       .replace(/[^a-zA-Z0-9_-]/g, '_');
     const filename = `${Date.now()}_${safeBaseName}${ext}`;
 
-    // 1. Cloud Vercel Blob Storage (Production on Vercel)
+    // 1. Vercel Blob Storage
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
         const blob = await put(`uploads/${filename}`, file, {
@@ -44,9 +65,10 @@ export async function POST(request: Request) {
         });
 
         return NextResponse.json({
-          message: 'Upload to Vercel Blob successful',
+          message: 'Upload successful',
           url: blob.url,
           filename,
+          mediaType,
         });
       } catch (blobError: any) {
         console.error('Vercel Blob Upload Error:', blobError);
@@ -57,16 +79,15 @@ export async function POST(request: Request) {
           return NextResponse.json(
             {
               error:
-                'Vercel Blob Configuration Error: Cannot use public access on a private store. Please recreate your Vercel Blob store as a Public Store in the Vercel Dashboard (Storage -> Create -> Vercel Blob -> Select Public Access).',
+                'Vercel Blob Configuration Error: Cannot use public access on a private store.',
             },
             { status: 400 }
           );
         }
-        throw blobError;
       }
     }
 
-    // 2. Local Filesystem Fallback (Local Server / VPS)
+    // 2. Local Filesystem Fallback
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -86,6 +107,7 @@ export async function POST(request: Request) {
       message: 'Upload to local storage successful',
       url: publicUrl,
       filename,
+      mediaType,
     });
   } catch (error: any) {
     console.error('File upload error:', error);

@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check, X, MessageSquare, AlignLeft } from 'lucide-react';
+import { Copy, Check, X, MessageSquare, AlignLeft, Video, Image as ImageIcon } from 'lucide-react';
 
 interface Post {
   title: string;
   imageUrl?: string | null;
+  videoUrl?: string | null;
+  mediaType?: 'IMAGE' | 'VIDEO' | string | null;
   caption?: string | null;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
@@ -29,10 +31,16 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const trackingLink = `${baseUrl}/post/${post.trackingCode}`;
 
-  let formattedMessage = `📢 NEW SOCIAL MEDIA POST\n\n${post.title.toUpperCase()}\n\n`;
+  const isVideo = post.mediaType === 'VIDEO' || Boolean(post.videoUrl);
+
+  let formattedMessage = `---------------------------------\n\n[Media Attached: ${isVideo ? 'Video' : 'Image'}]\n\n`;
+
+  if (post.title) {
+    formattedMessage += `Title: ${post.title}\n\n`;
+  }
 
   if (post.caption && post.caption.trim()) {
-    formattedMessage += `📝 CAPTION:\n${post.caption.trim()}\n\n`;
+    formattedMessage += `Caption:\n${post.caption.trim()}\n\n`;
   }
 
   if (post.facebookUrl) formattedMessage += `Facebook:\n${post.facebookUrl}\n\n`;
@@ -40,7 +48,7 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
   if (post.linkedinUrl) formattedMessage += `LinkedIn:\n${post.linkedinUrl}\n\n`;
   if (post.xUrl) formattedMessage += `X:\n${post.xUrl}\n\n`;
 
-  formattedMessage += `After interacting with the post, please submit your engagement details here:\n\n${trackingLink}`;
+  formattedMessage += `Interaction Tracking:\n${trackingLink}\n\n---------------------------------`;
 
   const handleCopyMessage = async () => {
     try {
@@ -73,7 +81,7 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
               <MessageSquare className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">WhatsApp Broadcast Generator</h3>
+              <h3 className="text-sm font-bold text-slate-900">WhatsApp Share Generator</h3>
               <p className="text-xs text-slate-500">Social Interaction Tracker (SIT)</p>
             </div>
           </div>
@@ -87,6 +95,23 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
 
         {/* Content Body */}
         <div className="p-6 space-y-4">
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span className="font-semibold text-slate-700">{post.title}</span>
+            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-100 font-mono text-[11px]">
+              {isVideo ? (
+                <>
+                  <Video className="h-3 w-3 text-purple-600" />
+                  <span>Video</span>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="h-3 w-3 text-cyan-600" />
+                  <span>Image</span>
+                </>
+              )}
+            </span>
+          </div>
+
           <div className="relative">
             <pre className="w-full p-4 rounded-xl bg-slate-900 text-xs sm:text-sm text-slate-200 font-mono whitespace-pre-wrap leading-relaxed overflow-x-auto max-h-80 select-all border border-slate-800">
               {formattedMessage}

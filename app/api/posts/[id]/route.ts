@@ -69,8 +69,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    const { title, imageUrl, caption, facebookUrl, instagramUrl, linkedinUrl, xUrl } =
-      await request.json();
+    const {
+      title,
+      imageUrl,
+      videoUrl,
+      mediaType,
+      caption,
+      facebookUrl,
+      instagramUrl,
+      linkedinUrl,
+      xUrl,
+    } = await request.json();
 
     if (caption && caption.length > 5000) {
       return NextResponse.json(
@@ -84,6 +93,8 @@ export async function PUT(
       data: {
         title: title?.trim(),
         imageUrl: imageUrl?.trim(),
+        videoUrl: videoUrl !== undefined ? (videoUrl ? videoUrl.trim() : null) : undefined,
+        mediaType: mediaType !== undefined ? mediaType : undefined,
         caption: caption !== undefined ? caption.trim() || null : undefined,
         facebookUrl: facebookUrl !== undefined ? facebookUrl.trim() || null : undefined,
         instagramUrl: instagramUrl !== undefined ? instagramUrl.trim() || null : undefined,

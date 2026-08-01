@@ -22,6 +22,7 @@ import {
   Activity,
   ShieldAlert,
   Share2,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -112,6 +113,7 @@ export default function Navbar() {
     navItems = [
       { href: '/super-admin', label: 'Super Admin HQ', icon: ShieldAlert },
       { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/admin/calendar', label: 'Calendar', icon: CalendarIcon },
       { href: '/admin/posts', label: 'Posts', icon: FileText },
       { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     ];
@@ -121,6 +123,7 @@ export default function Navbar() {
   ) {
     navItems = [
       { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/admin/calendar', label: 'Calendar', icon: CalendarIcon },
       { href: '/admin/posts', label: 'Posts', icon: FileText },
       { href: '/admin/designations', label: 'Designations', icon: Briefcase },
       { href: '/admin/join-requests', label: 'Join Requests', icon: UserCheck },
@@ -130,6 +133,7 @@ export default function Navbar() {
   } else if (user?.role === 'MEMBER') {
     navItems = [
       { href: '/member', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/member/calendar', label: 'Calendar', icon: CalendarIcon },
       { href: '/member/history', label: 'My Activity', icon: Activity },
     ];
   } else {

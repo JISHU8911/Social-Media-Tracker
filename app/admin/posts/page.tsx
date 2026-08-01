@@ -13,6 +13,7 @@ import {
   Trash2,
   Search,
   CheckCircle,
+  Video as VideoIcon,
 } from 'lucide-react';
 
 export default function AdminPostsPage() {
@@ -124,8 +125,20 @@ export default function AdminPostsPage() {
               >
                 <div className="space-y-4">
                   {/* Image banner */}
-                  <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
-                    {post.imageUrl ? (
+                  <div className="relative w-full h-48 bg-slate-900 overflow-hidden">
+                    {post.mediaType === 'VIDEO' || post.videoUrl ? (
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        <video
+                          src={post.videoUrl || post.imageUrl}
+                          className="w-full h-full object-cover opacity-80"
+                        />
+                        <div className="absolute inset-0 bg-slate-900/30 flex items-center justify-center">
+                          <span className="p-3 rounded-full bg-white/90 text-purple-700 shadow-lg">
+                            <VideoIcon className="h-6 w-6" />
+                          </span>
+                        </div>
+                      </div>
+                    ) : post.imageUrl ? (
                       <img
                         src={post.imageUrl}
                         alt={post.title}
@@ -133,7 +146,7 @@ export default function AdminPostsPage() {
                       />
                     ) : (
                       <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                        No Image
+                        No Media
                       </div>
                     )}
                     <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md border border-slate-200 text-[11px] font-bold text-cyan-700 shadow-sm">

@@ -41,6 +41,8 @@ interface PostDetails {
   id: string;
   title: string;
   imageUrl: string;
+  videoUrl?: string | null;
+  mediaType?: string | null;
   caption?: string | null;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
@@ -263,12 +265,18 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
 
         {/* Post Card & Social Media Links */}
         <div className="sit-card p-6 border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-6 shadow-sm">
-          <div className="h-48 rounded-xl bg-slate-100 overflow-hidden border border-slate-200">
-            {post.imageUrl ? (
+          <div className="h-56 rounded-xl bg-slate-900 overflow-hidden border border-slate-200 flex items-center justify-center">
+            {post.mediaType === 'VIDEO' || post.videoUrl ? (
+              <video
+                src={post.videoUrl || post.imageUrl}
+                controls
+                className="w-full h-full object-contain"
+              />
+            ) : post.imageUrl ? (
               <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
             ) : (
               <div className="h-full flex items-center justify-center text-slate-400 text-xs">
-                No Image
+                No Media
               </div>
             )}
           </div>

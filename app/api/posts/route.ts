@@ -62,15 +62,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const { title, imageUrl, caption, facebookUrl, instagramUrl, linkedinUrl, xUrl } =
-      await request.json();
+    const {
+      title,
+      imageUrl,
+      videoUrl,
+      mediaType,
+      caption,
+      facebookUrl,
+      instagramUrl,
+      linkedinUrl,
+      xUrl,
+    } = await request.json();
 
     if (!title || !title.trim()) {
       return NextResponse.json({ error: 'Post title is required' }, { status: 400 });
     }
 
-    if (!imageUrl || !imageUrl.trim()) {
-      return NextResponse.json({ error: 'Post image is required' }, { status: 400 });
+    const effectiveMediaType = mediaType === 'VIDEO' ? 'VIDEO' : 'IMAGE';
+    const primaryMediaUrl = effectiveMediaType === 'VIDEO' ? (videoUrl || imageUrl) : imageUrl;
+
+    if (!primaryMediaUrl || !primaryMediaUrl.trim()) {
+      return NextResponse.json(
+        { error: `Post ${effectiveMediaType.toLowerCase()} upload is required` },
+        { status: 400 }
+      );
     }
 
     if (caption && caption.length > 5000) {
@@ -95,7 +110,9 @@ export async function POST(request: Request) {
       data: {
         organizationId: session.organizationId,
         title: title.trim(),
-        imageUrl: imageUrl.trim(),
+        imageUrl: primaryMediaUrl.trim(),
+        mediaType: effectiveMediaType,
+        videoUrl: effectiveMediaType === 'VIDEO' ? primaryMediaUrl.trim() : (videoUrl?.trim() || null),
         caption: caption?.trim() || null,
         facebookUrl: facebookUrl?.trim() || null,
         instagramUrl: instagramUrl?.trim() || null,

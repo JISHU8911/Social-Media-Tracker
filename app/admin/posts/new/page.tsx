@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import ImageUploader from '@/components/ImageUploader';
+import MediaUploader from '@/components/MediaUploader';
 import {
   Facebook,
   Instagram,
@@ -19,7 +19,8 @@ export default function CreatePostPage() {
   const router = useRouter();
 
   const [title, setTitle] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [mediaType, setMediaType] = useState<'IMAGE' | 'VIDEO'>('IMAGE');
   const [caption, setCaption] = useState('');
   const [facebookUrl, setFacebookUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
@@ -45,8 +46,8 @@ export default function CreatePostPage() {
       return;
     }
 
-    if (!imageUrl) {
-      setError('Post Image upload is required. Please drag and drop or select an image file.');
+    if (!mediaUrl) {
+      setError(`Post ${mediaType === 'VIDEO' ? 'Video' : 'Image'} upload is required.`);
       return;
     }
 
@@ -64,7 +65,9 @@ export default function CreatePostPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim(),
-          imageUrl: imageUrl.trim(),
+          imageUrl: mediaUrl.trim(),
+          videoUrl: mediaType === 'VIDEO' ? mediaUrl.trim() : undefined,
+          mediaType,
           caption: caption.trim() || undefined,
           facebookUrl: facebookUrl.trim() || undefined,
           instagramUrl: instagramUrl.trim() || undefined,
@@ -131,15 +134,23 @@ export default function CreatePostPage() {
             />
           </div>
 
-          {/* Premium Drag & Drop Image Uploader */}
+          {/* Media Upload (Image or Video) */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Post Image Upload <span className="text-cyan-600">*</span>
+              Media Upload (Image or Video) <span className="text-cyan-600">*</span>
             </label>
-            <ImageUploader value={imageUrl} onChange={(url) => setImageUrl(url)} />
+            <MediaUploader
+              value={mediaUrl}
+              mediaType={mediaType}
+              onChange={(url, type) => {
+                setMediaUrl(url);
+                setMediaType(type);
+              }}
+              allowedTypes="ALL"
+            />
           </div>
 
-          {/* Caption (Multiline Textarea directly below Photo field) */}
+          {/* Caption (Multiline Textarea directly below Media field) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
