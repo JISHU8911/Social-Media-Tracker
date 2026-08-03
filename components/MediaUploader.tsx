@@ -63,8 +63,8 @@ export default function MediaUploader({
     if (file.size > maxLimit) {
       setError(
         currentMediaType === 'VIDEO'
-          ? 'Video size exceeds maximum limit of 100 MB.'
-          : 'Image size exceeds maximum limit of 10 MB.'
+          ? `Video size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds maximum limit of 100 MB.`
+          : `Image size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds maximum limit of 10 MB.`
       );
       return;
     }
@@ -110,9 +110,20 @@ export default function MediaUploader({
       clearInterval(progressInterval);
       setProgress(100);
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Server returned non-JSON response:', text);
+        if (res.status === 413 || text.includes('Request Entity Too Large')) {
+          throw new Error('File size exceeds server payload upload limit (Request Entity Too Large). Maximum video upload size is 100 MB.');
+        }
+        throw new Error(`Upload failed (HTTP ${res.status}): ${text || 'Non-JSON server response'}`);
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || 'Upload failed');
+        throw new Error(data.error || `Upload failed with status code ${res.status}`);
       }
 
       const returnedMediaType: 'IMAGE' | 'VIDEO' = currentMediaType;
@@ -152,11 +163,7 @@ export default function MediaUploader({
 
   const handleSwitchMediaType = (type: 'IMAGE' | 'VIDEO') => {
     setSelectedMediaType(type);
-    if (value) {
-      onChange('', type); // clear value on mode switch
-    } else {
-      onChange('', type);
-    }
+    onChange('', type);
   };
 
   return (
