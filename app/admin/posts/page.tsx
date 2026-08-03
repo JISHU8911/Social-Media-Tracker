@@ -125,9 +125,14 @@ export default function AdminPostsPage() {
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#D3D9D4] text-[#212A31] border border-[#748D92]">
-                      ID: {post.trackingCode}
-                    </span>
+                    <Link
+                      href={`/post/${post.trackingCode}`}
+                      target="_blank"
+                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#D3D9D4] text-[#124E66] border border-[#748D92] hover:underline inline-flex items-center gap-1"
+                      title="Open Public Tracking Link"
+                    >
+                      ID: {post.trackingCode} <ExternalLink className="w-3 h-3" />
+                    </Link>
                     <span className="text-xs font-bold text-[#124E66] flex items-center gap-1">
                       <CheckCircle className="h-3.5 w-3.5" />
                       {post._count?.submissions || 0} Submissions

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import WhatsAppModal from '@/components/WhatsAppModal';
 import * as XLSX from 'xlsx';
@@ -238,9 +239,18 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
               <h1 className="text-xl sm:text-2xl font-extrabold text-[#212A31] line-clamp-1">
                 {post.title}
               </h1>
-              <p className="text-xs text-[#124E66] font-mono font-bold">
-                Tracking Link: /post/{post.trackingCode}
-              </p>
+              <div className="flex items-center gap-1.5 text-xs font-mono font-bold mt-1">
+                <span className="text-[#2E3944]">Tracking Link:</span>
+                <Link
+                  href={`/post/${post.trackingCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#124E66] hover:underline hover:text-[#0E3E52] inline-flex items-center gap-1 bg-[#D3D9D4]/60 px-2 py-0.5 rounded border border-[#748D92]/40 transition-colors"
+                  title="Open Public Tracking Page"
+                >
+                  /post/{post.trackingCode} <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
           </div>
 
