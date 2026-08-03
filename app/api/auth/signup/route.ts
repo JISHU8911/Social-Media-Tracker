@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, createSessionToken } from '@/lib/auth';
+import { isEmailTestMode } from '@/lib/email';
 
+// DEVELOPMENT ONLY
+// Disable before production launch
 export async function POST(request: Request) {
   try {
-    const { name, email, password, confirmPassword } = await request.json();
+    const { name, email, password, confirmPassword, otpCode } = await request.json();
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
@@ -15,6 +18,8 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const cleanOtp = (otpCode || '').trim();
+    const isTestMode = isEmailTestMode();
 
     if (!password || password.length < 8) {
       return NextResponse.json(
@@ -25,6 +30,30 @@ export async function POST(request: Request) {
 
     if (password !== confirmPassword) {
       return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 });
+    }
+
+    if (!cleanOtp) {
+      return NextResponse.json({ error: '6-digit email verification code is required' }, { status: 400 });
+    }
+
+    // Verify OTP Code in Database
+    const otpRecord = await prisma.verificationCode.findFirst({
+      where: {
+        email: cleanEmail,
+        code: cleanOtp,
+        type: 'MEMBER_SIGNUP',
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    // Accept DB record match OR 123456 if test mode is enabled
+    const isOtpValid = !!otpRecord || (isTestMode && cleanOtp === '123456');
+
+    if (!isOtpValid) {
+      return NextResponse.json(
+        { error: 'Invalid or expired 6-digit email verification code' },
+        { status: 400 }
+      );
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -50,6 +79,11 @@ export async function POST(request: Request) {
       },
     });
 
+    // Clean up used OTP codes
+    await prisma.verificationCode.deleteMany({
+      where: { email: cleanEmail, type: 'MEMBER_SIGNUP' },
+    });
+
     const sessionPayload = {
       id: newUser.id,
       name: newUser.name,
@@ -61,7 +95,7 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json(
       {
-        message: 'Account created successfully',
+        message: 'Account created and email verified successfully',
         user: sessionPayload,
       },
       { status: 201 }

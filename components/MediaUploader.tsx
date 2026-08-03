@@ -11,7 +11,6 @@ import {
   Cloud,
   CheckCircle2,
   AlertCircle,
-  Play,
 } from 'lucide-react';
 
 interface MediaUploaderProps {
@@ -45,7 +44,6 @@ export default function MediaUploader({
 
     const fileCategory: 'IMAGE' | 'VIDEO' = isVid ? 'VIDEO' : 'IMAGE';
 
-    // Check size limit (10MB for image, 50MB for video)
     const maxLimit = isVid ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxLimit) {
       setError(
@@ -56,7 +54,6 @@ export default function MediaUploader({
       return;
     }
 
-    // Format check
     const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const allowedVideoTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/mov'];
     const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
@@ -141,17 +138,17 @@ export default function MediaUploader({
   const currentMediaType = mediaType || selectedMediaType;
 
   return (
-    <div className="space-y-4">
-      {/* Media Type Selector (Image vs Video) */}
+    <div className="space-y-4 font-sans">
+      {/* Media Type Selector */}
       {allowedTypes === 'ALL' && (
-        <div className="flex items-center space-x-3 bg-slate-100 p-1.5 rounded-xl max-w-xs">
+        <div className="flex items-center space-x-3 bg-[#D3D9D4] p-1.5 rounded-xl max-w-xs border border-[#748D92]">
           <button
             type="button"
             onClick={() => setSelectedMediaType('IMAGE')}
             className={`flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
               currentMediaType === 'IMAGE'
-                ? 'bg-white text-cyan-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#124E66] text-white shadow-sm'
+                : 'text-[#212A31] hover:text-[#124E66]'
             }`}
           >
             <ImageIcon className="h-4 w-4" />
@@ -162,8 +159,8 @@ export default function MediaUploader({
             onClick={() => setSelectedMediaType('VIDEO')}
             className={`flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
               currentMediaType === 'VIDEO'
-                ? 'bg-white text-purple-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#124E66] text-white shadow-sm'
+                : 'text-[#212A31] hover:text-[#124E66]'
             }`}
           >
             <VideoIcon className="h-4 w-4" />
@@ -173,14 +170,14 @@ export default function MediaUploader({
       )}
 
       {/* Tab Navigation */}
-      <div className="flex items-center space-x-1 border-b border-slate-200">
+      <div className="flex items-center space-x-1 border-b border-[#748D92]/30">
         <button
           type="button"
           onClick={() => setActiveTab('device')}
-          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all ${
             activeTab === 'device'
-              ? 'border-cyan-500 text-slate-900'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-[#124E66] text-[#212A31]'
+              : 'border-transparent text-[#2E3944] hover:text-[#212A31]'
           }`}
         >
           <HardDrive className="h-4 w-4" />
@@ -190,15 +187,15 @@ export default function MediaUploader({
         <button
           type="button"
           onClick={() => setActiveTab('gdrive')}
-          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all ${
             activeTab === 'gdrive'
-              ? 'border-cyan-500 text-slate-900'
-              : 'border-transparent text-slate-400 hover:text-slate-600'
+              ? 'border-[#124E66] text-[#212A31]'
+              : 'border-transparent text-[#2E3944] hover:text-[#212A31]'
           }`}
         >
-          <Cloud className="h-4 w-4 text-blue-500" />
+          <Cloud className="h-4 w-4 text-[#212A31]" />
           <span>Google Drive</span>
-          <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">
+          <span className="text-[10px] bg-[#D3D9D4] text-[#212A31] px-1.5 py-0.5 rounded font-mono border border-[#748D92]">
             Soon
           </span>
         </button>
@@ -206,15 +203,15 @@ export default function MediaUploader({
         <button
           type="button"
           onClick={() => setActiveTab('onedrive')}
-          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all ${
             activeTab === 'onedrive'
-              ? 'border-cyan-500 text-slate-900'
-              : 'border-transparent text-slate-400 hover:text-slate-600'
+              ? 'border-[#124E66] text-[#212A31]'
+              : 'border-transparent text-[#2E3944] hover:text-[#212A31]'
           }`}
         >
-          <Cloud className="h-4 w-4 text-sky-500" />
+          <Cloud className="h-4 w-4 text-[#212A31]" />
           <span>OneDrive</span>
-          <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">
+          <span className="text-[10px] bg-[#D3D9D4] text-[#212A31] px-1.5 py-0.5 rounded font-mono border border-[#748D92]">
             Soon
           </span>
         </button>
@@ -222,16 +219,16 @@ export default function MediaUploader({
 
       {activeTab !== 'device' && (
         <div className="p-6 text-center sit-card space-y-2">
-          <Cloud className="h-8 w-8 text-cyan-500 mx-auto" />
-          <h4 className="text-sm font-bold text-slate-900">Cloud Storage Integration Ready</h4>
-          <p className="text-xs text-slate-500">
+          <Cloud className="h-8 w-8 text-[#124E66] mx-auto" />
+          <h4 className="text-sm font-bold text-[#212A31]">Cloud Storage Integration Ready</h4>
+          <p className="text-xs text-[#2E3944]">
             {activeTab === 'gdrive' ? 'Google Drive' : 'Microsoft OneDrive'} picker will connect
-            seamlessly in upcoming enterprise updates. Please use Device Upload.
+            seamlessly in upcoming updates. Please use Device Upload.
           </p>
           <button
             type="button"
             onClick={() => setActiveTab('device')}
-            className="text-xs font-semibold text-cyan-600 hover:underline"
+            className="text-xs font-semibold text-[#124E66] hover:underline"
           >
             Switch to Device Upload
           </button>
@@ -241,16 +238,15 @@ export default function MediaUploader({
       {activeTab === 'device' && (
         <div className="space-y-3">
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center space-x-2">
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center space-x-2">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {value ? (
-            /* Uploaded Preview State (Image or Playable Video) */
-            <div className="relative sit-card overflow-hidden group border border-slate-200 shadow-md">
-              <div className="relative w-full min-h-[220px] max-h-[360px] bg-slate-900 flex items-center justify-center overflow-hidden">
+            <div className="relative sit-card overflow-hidden group border border-[#748D92] shadow-md">
+              <div className="relative w-full min-h-[220px] max-h-[360px] bg-[#212A31] flex items-center justify-center overflow-hidden">
                 {currentMediaType === 'VIDEO' ? (
                   <video
                     src={value}
@@ -266,8 +262,8 @@ export default function MediaUploader({
                 )}
               </div>
 
-              <div className="p-4 flex flex-wrap items-center justify-between gap-2 bg-white border-t border-slate-200">
-                <div className="flex items-center space-x-2 text-xs font-medium text-emerald-600">
+              <div className="p-4 flex flex-wrap items-center justify-between gap-2 bg-white border-t border-[#748D92]">
+                <div className="flex items-center space-x-2 text-xs font-medium text-emerald-700">
                   <CheckCircle2 className="h-4 w-4" />
                   <span>
                     {currentMediaType === 'VIDEO' ? 'Video' : 'Image'} Uploaded Successfully
@@ -296,7 +292,6 @@ export default function MediaUploader({
               </div>
             </div>
           ) : (
-            /* Dropzone */
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -304,24 +299,24 @@ export default function MediaUploader({
               onClick={() => fileInputRef.current?.click()}
               className={`p-8 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${
                 isDragging
-                  ? 'border-cyan-500 bg-cyan-50/50'
-                  : 'border-slate-300 hover:border-slate-400 bg-slate-50/60'
+                  ? 'border-[#124E66] bg-[#D3D9D4]/60'
+                  : 'border-[#748D92] hover:border-[#212A31] bg-white'
               }`}
             >
               <div className="max-w-xs mx-auto space-y-3">
-                <div className="mx-auto h-12 w-12 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600 border border-cyan-100">
+                <div className="mx-auto h-12 w-12 rounded-full bg-[#D3D9D4] flex items-center justify-center text-[#124E66] border border-[#748D92]">
                   {currentMediaType === 'VIDEO' ? (
-                    <VideoIcon className="h-6 w-6 text-purple-600" />
+                    <VideoIcon className="h-6 w-6 text-[#124E66]" />
                   ) : (
-                    <Upload className="h-6 w-6" />
+                    <Upload className="h-6 w-6 text-[#124E66]" />
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-xs sm:text-sm font-bold text-slate-900">
+                  <p className="text-xs sm:text-sm font-bold text-[#212A31]">
                     Click to upload or drag & drop {currentMediaType === 'VIDEO' ? 'video' : 'image'}
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[#2E3944]">
                     {currentMediaType === 'VIDEO'
                       ? 'Supported formats: MP4, MOV, WEBM (Max 50 MB)'
                       : 'Supported formats: JPG, PNG, WEBP (Max 10 MB)'}
@@ -330,13 +325,13 @@ export default function MediaUploader({
 
                 {uploading && (
                   <div className="space-y-1.5 pt-2">
-                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-[#D3D9D4] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-cyan-500 transition-all duration-300"
+                        className="h-full bg-[#124E66] transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       ></div>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-mono">
+                    <p className="text-[10px] text-[#2E3944] font-mono">
                       Uploading {currentMediaType === 'VIDEO' ? 'video' : 'image'}... {progress}%
                     </p>
                   </div>

@@ -250,7 +250,7 @@ export default function EmployeeTrackingPage({
   const selectedDesignationName = designations.find((d) => d.id === designationId)?.designationName || '';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] py-8 px-4 sm:px-6 lg:px-8 font-sans">
       <DuplicateSubmissionModal
         isOpen={duplicateModalOpen}
         onClose={() => setDuplicateModalOpen(false)}
@@ -262,14 +262,14 @@ export default function EmployeeTrackingPage({
       <div className="max-w-3xl mx-auto space-y-8">
         {/* Header / Brand */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Social Interaction Tracker (SIT)</span>
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white border border-[#748D92] text-[#212A31] text-xs font-bold shadow-sm">
+            <Sparkles className="h-3.5 w-3.5 text-[#124E66]" />
+            <span>ClubHQ</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31] tracking-tight">
             Employee Engagement Portal
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
+          <p className="text-xs sm:text-sm text-[#2E3944] font-medium max-w-lg mx-auto">
             Review company social media post details below, interact on your platforms, and log your engagement actions.
           </p>
         </div>

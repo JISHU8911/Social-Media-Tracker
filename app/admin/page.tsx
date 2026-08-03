@@ -51,60 +51,64 @@ export default function AdminDashboardPage() {
   const [selectedPostForWhatsApp, setSelectedPostForWhatsApp] = useState<PostItem | null>(null);
 
   useEffect(() => {
-    // Auth check
     fetch('/api/auth/me')
       .then((res) => {
-        if (!res.ok) router.push('/admin/login');
+        if (!res.ok) router.push('/login');
         return res.json();
       })
-      .catch(() => router.push('/admin/login'));
+      .catch(() => router.push('/login'));
 
-    // Fetch analytics summary
-    fetch('/api/analytics')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.summary) setSummary(data.summary);
-      })
-      .catch(() => {});
-
-    // Fetch recent submissions for Activity Timeline widget
-    fetch('/api/submissions')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setRecentSubmissions(data.slice(0, 5));
-      })
-      .catch(() => {});
-
-    // Fetch posts
-    fetch('/api/posts')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setPosts(data);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    fetchDashboardData();
   }, [router]);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const [analyticsRes, postsRes, submissionsRes] = await Promise.all([
+        fetch('/api/analytics'),
+        fetch('/api/posts'),
+        fetch('/api/submissions'),
+      ]);
+
+      if (analyticsRes.ok) {
+        const data = await analyticsRes.json();
+        setSummary(data.summary || null);
+      }
+      if (postsRes.ok) {
+        const data = await postsRes.json();
+        if (Array.isArray(data)) setPosts(data);
+      }
+      if (submissionsRes.ok) {
+        const data = await submissionsRes.json();
+        if (Array.isArray(data)) setRecentSubmissions(data.slice(0, 5));
+      }
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredPosts = posts.filter((p) =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-xs font-semibold text-cyan-600 mb-1">
+            <div className="flex items-center space-x-2 text-xs font-bold text-[#124E66] mb-1">
               <Sparkles className="h-3.5 w-3.5" />
               <span>SIT Executive HQ</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31] tracking-tight">
               Dashboard Overview
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500">
+            <p className="text-xs sm:text-sm text-[#2E3944] font-medium">
               Employee social media engagement metrics and active post performance.
             </p>
           </div>
@@ -118,223 +122,212 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        {/* Executive Analytics KPI Cards */}
+        {/* Dashboard Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Total Posts */}
-          <div className="sit-card p-5 space-y-2 relative overflow-hidden sit-card-hover">
+          <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
                 Total Posts
               </span>
-              <div className="p-2 rounded-lg bg-slate-100 text-slate-700">
-                <FileText className="h-4 w-4" />
+              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
+                <FileText className="h-5 w-5 text-[#212A31]" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
               {summary ? summary.totalPosts : 0}
             </div>
-            <p className="text-[11px] text-slate-500 font-medium">Active campaigns in SIT</p>
+            <p className="text-[11px] text-[#2E3944] font-medium">Active campaigns in SIT</p>
           </div>
 
           {/* Total Submissions */}
-          <div className="sit-card p-5 space-y-2 relative overflow-hidden sit-card-hover">
+          <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
                 Total Submissions
               </span>
-              <div className="p-2 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-100">
-                <CheckCircle className="h-4 w-4" />
+              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
+                <CheckCircle className="h-5 w-5 text-[#212A31]" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
               {summary ? summary.totalSubmissions : 0}
             </div>
-            <p className="text-[11px] text-slate-500 font-medium">Recorded employee responses</p>
+            <p className="text-[11px] text-[#2E3944] font-medium">Recorded employee responses</p>
           </div>
 
           {/* Participated Employees */}
-          <div className="sit-card p-5 space-y-2 relative overflow-hidden sit-card-hover">
+          <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
                 Participated Employees
               </span>
-              <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
-                <Users className="h-4 w-4" />
+              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
+                <Users className="h-5 w-5 text-[#212A31]" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
               {summary ? summary.totalEmployeesParticipated : 0}
             </div>
-            <p className="text-[11px] text-slate-500 font-medium">Unique active workforce</p>
+            <p className="text-[11px] text-[#2E3944] font-medium">Unique active workforce</p>
           </div>
 
           {/* Total Interactions */}
-          <div className="sit-card p-5 space-y-2 relative overflow-hidden sit-card-hover">
+          <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
                 Total Interactions
               </span>
-              <div className="p-2 rounded-lg bg-purple-50 text-purple-600 border border-purple-100">
-                <Activity className="h-4 w-4" />
+              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
+                <Activity className="h-5 w-5 text-[#212A31]" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
               {summary ? summary.totalInteractions : 0}
             </div>
-            <p className="text-[11px] text-slate-500 font-medium">Likes, comments, shares, etc.</p>
+            <p className="text-[11px] text-[#2E3944] font-medium">Aggregated digital actions</p>
           </div>
         </div>
 
-        {/* Activity Feed & Recent Submissions Widgets */}
+        {/* Quick Actions & Recent Submissions Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Latest Posts List (2 Cols) */}
-          <div className="lg:col-span-2 sit-card overflow-hidden shadow-sm space-y-4">
-            <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/50">
+          {/* Main Posts Management Panel */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Active Social Media Posts</h2>
-                <p className="text-xs text-slate-500">
-                  Manage tracking links and copy WhatsApp broadcast messages.
+                <h2 className="text-lg font-extrabold text-[#212A31]">Recent Posts</h2>
+                <p className="text-xs text-[#2E3944] font-medium">
+                  Track and distribute social campaigns.
                 </p>
               </div>
 
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <div className="relative max-w-xs">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#748D92]" />
                 <input
                   type="text"
+                  placeholder="Search posts..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search posts..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl sit-input text-xs font-medium"
+                  className="pl-9 pr-4 py-2 rounded-xl sit-input text-xs w-full"
                 />
               </div>
             </div>
 
             {loading ? (
-              <div className="p-12 text-center text-slate-400 text-xs">Loading posts...</div>
+              <div className="sit-card p-12 text-center text-xs font-semibold text-[#2E3944]">
+                Loading campaign posts...
+              </div>
             ) : filteredPosts.length === 0 ? (
-              <div className="p-12 text-center text-slate-500 text-xs space-y-2">
-                <FileText className="h-8 w-8 text-slate-300 mx-auto" />
-                <p>No social media posts found.</p>
+              <div className="sit-card p-12 text-center space-y-3">
+                <FileText className="h-10 w-10 text-[#748D92] mx-auto" />
+                <h3 className="text-sm font-bold text-[#212A31]">No Campaign Posts Found</h3>
+                <p className="text-xs text-[#2E3944]">Create your first post to start tracking employee social interaction.</p>
+                <Link href="/admin/posts/new" className="btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs">
+                  <PlusCircle className="h-4 w-4" /> Create Post
+                </Link>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm text-slate-700">
-                  <thead className="bg-slate-100/70 text-slate-600 uppercase tracking-wider text-[11px] border-b border-slate-200">
-                    <tr>
-                      <th className="py-3.5 px-4 sm:px-6">Post Details</th>
-                      <th className="py-3.5 px-4 sm:px-6">Submissions</th>
-                      <th className="py-3.5 px-4 sm:px-6 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {filteredPosts.map((post) => (
-                      <tr key={post.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-4 sm:px-6">
-                          <div className="flex items-center space-x-3">
-                            <div className="h-10 w-14 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 flex-shrink-0">
-                              {post.imageUrl ? (
-                                <img
-                                  src={post.imageUrl}
-                                  alt={post.title}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="h-full flex items-center justify-center text-[9px] text-slate-400">
-                                  No Image
-                                </div>
-                              )}
-                            </div>
-                            <div className="space-y-0.5">
-                              <Link
-                                href={`/admin/posts/${post.id}`}
-                                className="font-bold text-slate-900 hover:text-cyan-600 transition-colors line-clamp-1 text-xs sm:text-sm"
-                              >
-                                {post.title}
-                              </Link>
-                              <div className="text-[11px] text-slate-500 font-mono">
-                                /post/{post.trackingCode}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredPosts.slice(0, 6).map((post) => (
+                  <div
+                    key={post.id}
+                    className="sit-card p-5 bg-white border border-[#748D92] rounded-2xl space-y-4 hover:border-[#212A31] transition-all flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#D3D9D4] text-[#212A31] border border-[#748D92]">
+                          ID: {post.trackingCode}
+                        </span>
+                        <span className="text-[11px] font-bold text-[#124E66] flex items-center gap-1">
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          {post._count.submissions} Submissions
+                        </span>
+                      </div>
 
-                        <td className="py-3 px-4 sm:px-6 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">
-                            {post._count.submissions} Submissions
-                          </span>
-                        </td>
-
-                        <td className="py-3 px-4 sm:px-6 text-right whitespace-nowrap space-x-2">
-                          <button
-                            onClick={() => setSelectedPostForWhatsApp(post)}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-all"
-                          >
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            <span>WhatsApp</span>
-                          </button>
-
-                          <Link
-                            href={`/admin/posts/${post.id}`}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold btn-secondary"
-                          >
-                            <span>View Details</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Recent Activity Timeline Widget (1 Col) */}
-          <div className="sit-card p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-cyan-600" />
-                <span>Recent Submissions Feed</span>
-              </h3>
-              <span className="text-[10px] font-semibold text-slate-400 font-mono uppercase">
-                Real-time
-              </span>
-            </div>
-
-            {recentSubmissions.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6">No recent submission activity.</p>
-            ) : (
-              <div className="space-y-3.5">
-                {recentSubmissions.map((sub) => (
-                  <div key={sub.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900">{sub.fullName}</span>
-                      <span className="text-[10px] text-slate-400">
-                        {new Date(sub.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                      <h3 className="font-extrabold text-sm text-[#212A31] line-clamp-2">
+                        {post.title}
+                      </h3>
                     </div>
-                    <p className="text-[11px] font-semibold text-cyan-700">
-                      {sub.designation?.designationName}
-                    </p>
-                    <p className="text-[11px] text-slate-500 truncate">
-                      Post: {sub.post?.title}
-                    </p>
+
+                    <div className="pt-3 border-t border-[#748D92]/30 flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => setSelectedPostForWhatsApp(post)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#124E66] text-white hover:bg-[#0E3E52] flex items-center gap-1.5 shadow-sm"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" /> WhatsApp Alert
+                      </button>
+
+                      <Link
+                        href={`/admin/posts/${post.id}`}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#212A31] text-white hover:bg-[#192026] flex items-center gap-1"
+                      >
+                        View Details <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </div>
-      </main>
 
-      {/* WhatsApp Message Generator Modal */}
-      {selectedPostForWhatsApp && (
-        <WhatsAppModal
-          post={selectedPostForWhatsApp}
-          isOpen={Boolean(selectedPostForWhatsApp)}
-          onClose={() => setSelectedPostForWhatsApp(null)}
-        />
-      )}
+          {/* Activity Feed / Submissions Widget */}
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-extrabold text-[#212A31]">Recent Activity</h2>
+              <p className="text-xs text-[#2E3944] font-medium">
+                Live employee engagement logging feed.
+              </p>
+            </div>
+
+            <div className="sit-card p-5 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+              {recentSubmissions.length === 0 ? (
+                <div className="text-center py-6 text-xs text-[#2E3944] font-medium">
+                  No recent activity logged yet.
+                </div>
+              ) : (
+                <div className="space-y-4 divide-y divide-[#748D92]/30">
+                  {recentSubmissions.map((sub, i) => (
+                    <div key={sub.id || i} className={`${i > 0 ? 'pt-3' : ''} flex items-start space-x-3`}>
+                      <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31] shrink-0 mt-0.5">
+                        <TrendingUp className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-[#212A31] truncate">
+                          {sub.user?.name || sub.userName || 'Employee'}
+                        </p>
+                        <p className="text-[11px] text-[#2E3944] truncate font-medium">
+                          Submitted proof for {sub.post?.title || 'Campaign Post'}
+                        </p>
+                        <span className="text-[10px] text-[#748D92] flex items-center gap-1 mt-1 font-mono">
+                          <Clock className="h-3 w-3" />
+                          {new Date(sub.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-[#748D92]/30">
+                <Link
+                  href="/admin/analytics"
+                  className="w-full py-2 rounded-xl btn-secondary text-xs font-bold text-center block"
+                >
+                  View Full Analytics Engine
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* WhatsApp Modal */}
+        {selectedPostForWhatsApp && (
+          <WhatsAppModal
+            post={selectedPostForWhatsApp}
+            onClose={() => setSelectedPostForWhatsApp(null)}
+          />
+        )}
+      </main>
     </div>
   );
 }

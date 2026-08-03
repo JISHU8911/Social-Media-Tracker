@@ -6,16 +6,29 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Running database seed script...');
 
-  const superAdminName = process.env.SUPER_ADMIN_NAME?.trim() || 'Platform Super Admin';
-  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.trim() || 'admin@sit.com';
-  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD?.trim() || 'Admin123!';
+  const superAdminName = process.env.SUPER_ADMIN_NAME?.trim() || 'JISHU DAS';
+  const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL?.trim() || 'dass456890@gmail.com').toLowerCase();
+  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD?.trim() || '123456789';
 
-  // 1. Idempotent Platform Super Admin creation & password sync
-  const existingSuperAdmin = await prisma.user.findUnique({
+  const passwordHash = await bcrypt.hash(superAdminPassword, 10);
+
+  // Clean up any duplicate Super Admin accounts if multiple exist
+  const existingUsers = await prisma.user.findMany({
     where: { email: superAdminEmail },
   });
 
-  const passwordHash = await bcrypt.hash(superAdminPassword, 10);
+  if (existingUsers.length > 1) {
+    console.log(`⚠️ Found ${existingUsers.length} duplicate user records for ${superAdminEmail}. Cleaning up duplicates...`);
+    const primaryId = existingUsers[0].id;
+    const duplicateIds = existingUsers.slice(1).map((u) => u.id);
+    await prisma.user.deleteMany({
+      where: { id: { in: duplicateIds } },
+    });
+  }
+
+  const existingSuperAdmin = await prisma.user.findUnique({
+    where: { email: superAdminEmail },
+  });
 
   if (!existingSuperAdmin) {
     await prisma.user.create({
@@ -29,7 +42,7 @@ async function main() {
     });
     console.log(`✅ Successfully created Platform Super Admin: ${superAdminEmail}`);
   } else {
-    // Ensure role is PLATFORM_SUPER_ADMIN and update password hash to match environment variable
+    // Idempotently update role, name, active status, and passwordHash
     await prisma.user.update({
       where: { email: superAdminEmail },
       data: {
@@ -39,7 +52,7 @@ async function main() {
         passwordHash,
       },
     });
-    console.log(`ℹ️ Successfully updated Platform Super Admin password & role: ${superAdminEmail}`);
+    console.log(`ℹ️ Successfully updated Platform Super Admin passwordHash & role for: ${superAdminEmail}`);
   }
 
   console.log('✅ Database seeding completed successfully.');

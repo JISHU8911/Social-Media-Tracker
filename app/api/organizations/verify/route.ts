@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession();
     const { orgId, uniqueCode } = await request.json();
 
     if (!orgId || !uniqueCode) {
@@ -42,8 +44,28 @@ export async function POST(request: Request) {
       );
     }
 
+    let alreadySent = false;
+    let alreadySentMessage = '';
+
+    if (session) {
+      const existingPending = await prisma.joinRequest.findFirst({
+        where: {
+          organizationId: organization.id,
+          userId: session.id,
+          status: 'PENDING',
+        },
+      });
+
+      if (existingPending) {
+        alreadySent = true;
+        alreadySentMessage = `Joining Request Already sent to ${organization.name}`;
+      }
+    }
+
     return NextResponse.json({
       valid: true,
+      alreadySent,
+      message: alreadySentMessage,
       organizationId: organization.id,
       organizationName: organization.name,
       orgIdCode: organization.orgId,

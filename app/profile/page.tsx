@@ -2,12 +2,39 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Building2, Key, CheckCircle, AlertCircle, RefreshCw, Send, ShieldCheck, Clock } from 'lucide-react';
+import Link from 'next/link';
+import {
+  User,
+  Building2,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  Send,
+  Clock,
+  LayoutDashboard,
+  Plus,
+  Hourglass,
+  AlertTriangle,
+  UserCheck,
+  ShieldCheck,
+  Mail,
+  Lock,
+} from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 interface DesignationItem {
   id: string;
   designationName: string;
+}
+
+interface PendingRequestItem {
+  id: string;
+  organizationId: string;
+  organizationName: string;
+  orgIdCode: string;
+  designationName: string;
+  status: string;
+  createdAt: string;
 }
 
 export default function UserProfilePage() {
@@ -17,49 +44,48 @@ export default function UserProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Pending Join Requests state
+  const [pendingRequests, setPendingRequests] = useState<PendingRequestItem[]>([]);
+  const [showJoinForm, setShowJoinForm] = useState(false);
+
   // Join form state
   const [orgIdInput, setOrgIdInput] = useState('');
   const [uniqueCodeInput, setUniqueCodeInput] = useState('');
   const [verifyingOrg, setVerifyingOrg] = useState(false);
+  const [alreadySentAlert, setAlreadySentAlert] = useState<string | null>(null);
+
   const [verifiedOrg, setVerifiedOrg] = useState<{
     organizationId: string;
     organizationName: string;
     orgIdCode: string;
     designations: DesignationItem[];
+    alreadySent?: boolean;
   } | null>(null);
 
   const [selectedDesignationId, setSelectedDesignationId] = useState('');
   const [submittingJoin, setSubmittingJoin] = useState(false);
 
-  const fetchSession = async () => {
+  const fetchSessionAndRequests = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/me');
-      const data = await res.json();
-      if (res.ok && data.user) {
-        setUser(data.user);
-        const role = data.user.role;
-        const orgId = data.user.organizationId;
+      const [sessionRes, requestsRes] = await Promise.all([
+        fetch('/api/auth/me'),
+        fetch('/api/organizations/my-requests'),
+      ]);
 
-        if (role === 'PLATFORM_SUPER_ADMIN' || role === 'SUPER_ADMIN') {
-          router.push('/super-admin');
-          return;
-        }
-        if (
-          role === 'ORGANIZATION_SUPER_ADMIN' ||
-          role === 'ORGANIZATION_ADMIN' ||
-          role === 'ADMIN' ||
-          Boolean(orgId)
-        ) {
-          router.push('/admin');
-          return;
-        }
-        if (role === 'MEMBER') {
-          router.push('/member');
-          return;
-        }
+      const sessionData = await sessionRes.json();
+      if (sessionRes.ok && sessionData.user) {
+        setUser(sessionData.user);
       } else {
         router.push('/login');
+        return;
+      }
+
+      if (requestsRes.ok) {
+        const requestsData = await requestsRes.json();
+        if (Array.isArray(requestsData)) {
+          setPendingRequests(requestsData);
+        }
       }
     } catch (err) {
       router.push('/login');
@@ -69,13 +95,14 @@ export default function UserProfilePage() {
   };
 
   useEffect(() => {
-    fetchSession();
+    fetchSessionAndRequests();
   }, []);
 
   const handleVerifyOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setAlreadySentAlert(null);
     setVerifiedOrg(null);
     setSelectedDesignationId('');
 
@@ -101,13 +128,21 @@ export default function UserProfilePage() {
         throw new Error(data.error || 'Invalid Organization credentials');
       }
 
+      if (data.alreadySent) {
+        setAlreadySentAlert(data.message || `Joining Request Already sent to ${data.organizationName}`);
+      }
+
       setVerifiedOrg({
         organizationId: data.organizationId,
         organizationName: data.organizationName,
         orgIdCode: data.orgIdCode,
         designations: data.designations || [],
+        alreadySent: data.alreadySent,
       });
-      setSuccess(`Organization found: ${data.organizationName}. Please select your designation.`);
+
+      if (!data.alreadySent) {
+        setSuccess(`Organization found: ${data.organizationName}. Please select your designation.`);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to verify organization');
     } finally {
@@ -122,6 +157,11 @@ export default function UserProfilePage() {
 
     if (!verifiedOrg) {
       setError('Please verify organization first');
+      return;
+    }
+
+    if (verifiedOrg.alreadySent) {
+      setError(`Joining Request Already sent to ${verifiedOrg.organizationName}`);
       return;
     }
 
@@ -148,12 +188,12 @@ export default function UserProfilePage() {
         throw new Error(data.error || 'Failed to submit join request');
       }
 
-      setSuccess('Join request submitted successfully! Status: PENDING Organization Admin approval.');
+      setSuccess(`Joining Request Sent to ${verifiedOrg.organizationName}! Status: PENDING approval.`);
       setVerifiedOrg(null);
       setOrgIdInput('');
       setUniqueCodeInput('');
       setSelectedDesignationId('');
-      fetchSession();
+      fetchSessionAndRequests();
     } catch (err: any) {
       setError(err.message || 'Failed to submit request');
     } finally {
@@ -163,161 +203,192 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] flex items-center justify-center font-sans">
         <div className="text-center space-y-3">
-          <RefreshCw className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
-          <p className="text-sm text-slate-400">Loading profile workspace...</p>
+          <RefreshCw className="w-8 h-8 animate-spin text-[#124E66] mx-auto" />
+          <p className="text-xs font-bold text-[#2E3944]">Loading user profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
       <Navbar />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
         {/* Profile Info Header */}
-        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+        <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-soft">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xl">
+            <div className="w-16 h-16 rounded-2xl bg-[#D3D9D4] border border-[#748D92] flex items-center justify-center text-[#212A31] font-extrabold text-2xl">
               {user?.name?.charAt(0) || 'U'}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">{user?.name}</h1>
-              <p className="text-xs text-slate-400">{user?.email}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
+              <h1 className="text-xl font-extrabold text-[#212A31]">{user?.name}</h1>
+              <p className="text-xs text-[#2E3944] font-medium">{user?.email}</p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#212A31] text-white text-[10px] font-bold uppercase tracking-wider">
                   Role: {user?.role}
                 </span>
-                {user?.organizationName && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
+                {user?.organizationName ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider">
                     Org: {user?.organizationName} ({user?.orgIdCode})
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#D3D9D4] border border-[#748D92] text-[#2E3944] text-[10px] font-extrabold uppercase tracking-wider">
+                    No Organization Joined
                   </span>
                 )}
               </div>
             </div>
           </div>
+          <Link
+            href="/member"
+            className="btn-primary px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 self-start sm:self-center shadow-sm"
+          >
+            <LayoutDashboard className="w-4 h-4" /> Go to Dashboard
+          </Link>
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-3">
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-3">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 shrink-0" />
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600" />
             <span>{success}</span>
           </div>
         )}
 
-        {/* Join Organization Card (Sections 9 & 12) */}
-        <section className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-6">
-          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-            <Building2 className="w-6 h-6 text-indigo-400" />
-            <div>
-              <h2 className="text-lg font-bold text-white">Join an Organization</h2>
-              <p className="text-xs text-slate-400">
-                Enter your Organization ID and Unique Code to dynamically load designations and submit a join request.
-              </p>
+        {/* Account Details & Quick Actions Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+            <h2 className="text-base font-extrabold text-[#212A31] flex items-center gap-2 border-b border-[#748D92]/30 pb-3">
+              <UserCheck className="w-5 h-5 text-[#124E66]" /> Account Summary
+            </h2>
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between py-1.5 border-b border-[#748D92]/20">
+                <span className="text-[#2E3944] font-bold">Full Name</span>
+                <span className="font-extrabold text-[#212A31]">{user?.name}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-[#748D92]/20">
+                <span className="text-[#2E3944] font-bold">Email Address</span>
+                <span className="font-mono text-[#212A31] font-semibold">{user?.email}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-[#748D92]/20">
+                <span className="text-[#2E3944] font-bold">Account Role</span>
+                <span className="font-bold text-[#124E66]">{user?.role}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-[#748D92]/20">
+                <span className="text-[#2E3944] font-bold">Joined Organization</span>
+                <span className="font-bold text-[#212A31]">
+                  {user?.organizationName || 'Not Joined Yet'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1.5">
+                <span className="text-[#2E3944] font-bold">Account Status</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase">
+                  ACTIVE
+                </span>
+              </div>
             </div>
           </div>
 
-          {!verifiedOrg ? (
-            <form onSubmit={handleVerifyOrg} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Organization ID * (e.g. ORG-1001)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={orgIdInput}
-                    onChange={(e) => setOrgIdInput(e.target.value.toUpperCase())}
-                    placeholder="ORG-1001"
-                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Organization Unique Code * (e.g. K8P2X9F4)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={uniqueCodeInput}
-                    onChange={(e) => setUniqueCodeInput(e.target.value.toUpperCase())}
-                    placeholder="K8P2X9F4"
-                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono text-sm"
-                  />
-                </div>
+          <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+            <h2 className="text-base font-extrabold text-[#212A31] flex items-center gap-2 border-b border-[#748D92]/30 pb-3">
+              <Building2 className="w-5 h-5 text-[#124E66]" /> Organization Status
+            </h2>
+            {user?.organizationName ? (
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">
+                  Active Membership
+                </span>
+                <p className="text-sm font-extrabold text-[#212A31]">{user.organizationName}</p>
+                <p className="text-xs text-[#2E3944] font-mono">Org ID: {user.orgIdCode}</p>
               </div>
-
-              <button
-                type="submit"
-                disabled={verifyingOrg}
-                className="w-full py-3 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {verifyingOrg ? 'Verifying Credentials...' : 'Verify Organization'}
-              </button>
-            </form>
-          ) : (
-            /* Dynamic Designation Selection Form (Section 12) */
-            <form onSubmit={handleSubmitJoin} className="space-y-5 animate-in fade-in duration-300">
-              <div className="p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-indigo-300 font-medium">Target Organization</span>
-                  <h3 className="text-base font-bold text-white">{verifiedOrg.organizationName}</h3>
-                  <span className="text-xs text-indigo-400 font-mono">ID: {verifiedOrg.orgIdCode}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setVerifiedOrg(null)}
-                  className="text-xs text-slate-400 hover:text-white underline"
+            ) : (
+              <div className="space-y-4">
+                <p className="text-xs text-[#2E3944] font-medium leading-relaxed">
+                  You are currently using ClubHQ as an independent user. You can apply to join an organization anytime to unlock collaborative campaigns and content features.
+                </p>
+                <Link
+                  href="/join-organization"
+                  className="btn-primary w-full py-3 text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm"
                 >
-                  Change Org
-                </button>
+                  <Building2 className="w-4 h-4" /> Go to Join Organization Page
+                </Link>
               </div>
+            )}
+          </div>
+        </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                  Select Designation * (Mandatory)
-                </label>
-                <select
-                  required
-                  value={selectedDesignationId}
-                  onChange={(e) => setSelectedDesignationId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-indigo-500 text-sm"
-                >
-                  <option value="">-- Choose Designation --</option>
-                  {verifiedOrg.designations.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.designationName}
-                    </option>
-                  ))}
-                </select>
-                {verifiedOrg.designations.length === 0 && (
-                  <p className="text-xs text-amber-400 mt-2">
-                    No active designations found for this organization. Please ask your Org Admin to create designations first.
-                  </p>
-                )}
-              </div>
+        {/* Pending Join Requests Status Cards */}
+        {pendingRequests.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-[#212A31] flex items-center gap-2">
+                <Hourglass className="w-5 h-5 text-[#124E66]" /> Active Join Requests ({pendingRequests.length})
+              </h2>
+            </div>
 
-              <button
-                type="submit"
-                disabled={submittingJoin || !selectedDesignationId}
-                className="w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/20 transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            {pendingRequests.map((req) => (
+              <div
+                key={req.id}
+                className="sit-card p-6 bg-white border border-[#124E66]/60 rounded-2xl space-y-4 shadow-soft"
               >
-                {submittingJoin ? 'Submitting Join Request...' : 'Submit Join Request'} <Send className="w-4 h-4" />
-              </button>
-            </form>
-          )}
-        </section>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#748D92]/30 pb-4">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#124E66] block mb-1">
+                      Request Status
+                    </span>
+                    <h3 className="text-lg font-extrabold text-[#212A31]">
+                      Joining Request Sent to {req.organizationName}
+                    </h3>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold shrink-0 self-start sm:self-center">
+                    <Clock className="w-3.5 h-3.5" /> PENDING APPROVAL
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                  <div className="p-3 rounded-xl bg-[#D3D9D4]/40 border border-[#748D92]/40">
+                    <span className="text-[#2E3944] block text-[10px] uppercase font-bold">
+                      Organization
+                    </span>
+                    <span className="font-extrabold text-[#212A31] text-sm mt-0.5 block">
+                      {req.organizationName}
+                    </span>
+                    <span className="font-mono text-[#124E66] text-[11px]">
+                      {req.orgIdCode || 'ID Pending'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-[#D3D9D4]/40 border border-[#748D92]/40">
+                    <span className="text-[#2E3944] block text-[10px] uppercase font-bold">
+                      Requested Designation
+                    </span>
+                    <span className="font-extrabold text-[#212A31] text-sm mt-0.5 block">
+                      {req.designationName}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-[#D3D9D4]/40 border border-[#748D92]/40">
+                    <span className="text-[#2E3944] block text-[10px] uppercase font-bold">
+                      Submitted Date
+                    </span>
+                    <span className="font-medium text-[#212A31] text-sm mt-0.5 block font-mono">
+                      {new Date(req.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
       </main>
     </div>
   );

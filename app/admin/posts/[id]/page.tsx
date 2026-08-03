@@ -198,20 +198,20 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
-        <div className="text-xs font-semibold text-slate-500">Loading post details...</div>
+      <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] flex items-center justify-center font-sans">
+        <div className="text-xs font-bold text-[#2E3944]">Loading post details...</div>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4">
-        <div className="sit-card p-8 text-center space-y-3">
-          <p className="text-sm font-medium">Post not found.</p>
+      <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] flex items-center justify-center p-4 font-sans">
+        <div className="sit-card p-8 text-center space-y-3 bg-white border border-[#748D92] rounded-2xl shadow-soft">
+          <p className="text-sm font-bold text-[#212A31]">Post not found.</p>
           <button
             onClick={() => router.push('/admin')}
-            className="text-xs font-semibold text-cyan-600 hover:underline"
+            className="btn-primary px-4 py-2 text-xs font-bold"
           >
             Back to Dashboard
           </button>
@@ -221,7 +221,7 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -230,15 +230,15 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/admin')}
-              className="p-2.5 rounded-xl btn-secondary text-slate-600 hover:text-slate-900"
+              className="p-2.5 rounded-xl btn-secondary text-white"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 line-clamp-1">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-[#212A31] line-clamp-1">
                 {post.title}
               </h1>
-              <p className="text-xs text-cyan-600 font-mono font-medium">
+              <p className="text-xs text-[#124E66] font-mono font-bold">
                 Tracking Link: /post/{post.trackingCode}
               </p>
             </div>

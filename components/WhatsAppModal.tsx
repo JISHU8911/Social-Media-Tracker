@@ -18,11 +18,11 @@ interface Post {
 
 interface WhatsAppModalProps {
   post: Post;
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
 }
 
-export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalProps) {
+export default function WhatsAppModal({ post, isOpen = true, onClose }: WhatsAppModalProps) {
   const [copiedMessage, setCopiedMessage] = useState(false);
   const [copiedCaption, setCopiedCaption] = useState(false);
 
@@ -72,22 +72,22 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-lg sit-card shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#212A31]/70 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg sit-card bg-white border border-[#748D92] rounded-2xl shadow-2xl overflow-hidden text-[#212A31]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#748D92]/30 bg-[#D3D9D4]/50">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200">
+            <div className="p-2 rounded-lg bg-[#124E66] text-white shadow-sm">
               <MessageSquare className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">WhatsApp Share Generator</h3>
-              <p className="text-xs text-slate-500">Social Interaction Tracker (SIT)</p>
+              <h3 className="text-sm font-extrabold text-[#212A31]">WhatsApp Share Generator</h3>
+              <p className="text-xs text-[#2E3944] font-medium">ClubHQ</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+            className="p-1.5 text-[#212A31]/60 hover:text-[#212A31] rounded-lg hover:bg-slate-200 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -95,17 +95,17 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
 
         {/* Content Body */}
         <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span className="font-semibold text-slate-700">{post.title}</span>
-            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-100 font-mono text-[11px]">
+          <div className="flex items-center justify-between text-xs text-[#2E3944]">
+            <span className="font-extrabold text-[#212A31] line-clamp-1">{post.title}</span>
+            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-[#D3D9D4] font-mono text-[11px] border border-[#748D92] text-[#212A31]">
               {isVideo ? (
                 <>
-                  <Video className="h-3 w-3 text-purple-600" />
+                  <Video className="h-3 w-3 text-[#124E66]" />
                   <span>Video</span>
                 </>
               ) : (
                 <>
-                  <ImageIcon className="h-3 w-3 text-cyan-600" />
+                  <ImageIcon className="h-3 w-3 text-[#212A31]" />
                   <span>Image</span>
                 </>
               )}
@@ -113,14 +113,14 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
           </div>
 
           <div className="relative">
-            <pre className="w-full p-4 rounded-xl bg-slate-900 text-xs sm:text-sm text-slate-200 font-mono whitespace-pre-wrap leading-relaxed overflow-x-auto max-h-80 select-all border border-slate-800">
+            <pre className="w-full p-4 rounded-xl bg-[#212A31] text-xs sm:text-sm text-white font-mono whitespace-pre-wrap leading-relaxed overflow-x-auto max-h-80 select-all border border-[#212A31]">
               {formattedMessage}
             </pre>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-200 bg-slate-50">
+        <div className="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-[#748D92]/30 bg-[#D3D9D4]/30">
           <button
             onClick={onClose}
             className="px-3.5 py-2 text-xs font-semibold btn-secondary"
@@ -133,8 +133,8 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
               onClick={handleCopyCaption}
               className={`inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
                 copiedCaption
-                  ? 'bg-purple-50 text-purple-700 border-purple-300'
-                  : 'bg-white text-purple-700 hover:bg-purple-50 border-purple-200'
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : 'bg-white text-[#212A31] hover:bg-[#D3D9D4] border-[#748D92]'
               }`}
             >
               {copiedCaption ? (
@@ -153,11 +153,7 @@ export default function WhatsAppModal({ post, isOpen, onClose }: WhatsAppModalPr
 
           <button
             onClick={handleCopyMessage}
-            className={`inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              copiedMessage
-                ? 'bg-emerald-600 text-white'
-                : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm'
-            }`}
+            className={`inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all btn-primary shadow-sm`}
           >
             {copiedMessage ? (
               <>

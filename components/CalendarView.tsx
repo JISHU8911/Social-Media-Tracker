@@ -16,7 +16,6 @@ import {
   Grid,
   CalendarDays,
   X,
-  Upload,
   Image as ImageIcon,
   Video as VideoIcon,
   Search,
@@ -25,17 +24,21 @@ import {
   Edit,
   Eye,
   Info,
+  Building2,
+  FileText,
+  AlignLeft,
 } from 'lucide-react';
 
 export interface CalendarEntryData {
   id: string;
   organizationId: string;
   title: string;
-  date: string; // ISO String
+  date: string;
   targetTime: string;
   status: 'PLANNED' | 'POSTER_READY' | 'POSTED' | 'CANCELLED' | 'DELAYED';
   creativeUrl?: string | null;
   creativeType?: 'IMAGE' | 'VIDEO' | null;
+  caption?: string | null;
   actualPostedDate?: string | null;
   actualPostedTime?: string | null;
   cancellationReason?: string | null;
@@ -49,6 +52,24 @@ export interface CalendarEntryData {
 interface CalendarViewProps {
   userRole: string; // 'ORGANIZATION_SUPER_ADMIN' | 'ORGANIZATION_ADMIN' | 'MEMBER' | 'PLATFORM_SUPER_ADMIN'
   canManage: boolean; // True for Admins/Super Admins
+}
+
+// Local date string helper (YYYY-MM-DD) to fix Date Shift bug completely
+function toLocalDateString(dateInput: Date | string): string {
+  if (!dateInput) return '';
+  if (typeof dateInput === 'string') {
+    const match = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    const d = new Date(dateInput);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  const year = dateInput.getFullYear();
+  const month = String(dateInput.getMonth() + 1).padStart(2, '0');
+  const day = String(dateInput.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export default function CalendarView({ userRole, canManage }: CalendarViewProps) {
@@ -67,22 +88,20 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
 
   // Form states for Creation
   const [newTitle, setNewTitle] = useState('');
-  const [newDate, setNewDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newDate, setNewDate] = useState(toLocalDateString(new Date()));
   const [newTargetTime, setNewTargetTime] = useState('12:00');
   const [newStatus, setNewStatus] = useState<string>('PLANNED');
+  const [newCaption, setNewCaption] = useState('');
 
   // Form states for Status Update Modal
   const [updateStatus, setUpdateStatus] = useState<string>('POSTER_READY');
   const [creativeUrl, setCreativeUrl] = useState<string>('');
   const [creativeType, setCreativeType] = useState<'IMAGE' | 'VIDEO'>('IMAGE');
-  const [actualPostedDate, setActualPostedDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [caption, setCaption] = useState<string>('');
+  const [actualPostedDate, setActualPostedDate] = useState(toLocalDateString(new Date()));
   const [actualPostedTime, setActualPostedTime] = useState('12:00');
   const [cancellationReason, setCancellationReason] = useState('');
-  const [delayedNewDate, setDelayedNewDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [delayedNewDate, setDelayedNewDate] = useState(toLocalDateString(new Date()));
   const [delayedNewTargetTime, setDelayedNewTargetTime] = useState('12:00');
   const [delayReason, setDelayReason] = useState('');
 
@@ -97,12 +116,13 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
     setLoading(true);
     try {
       const res = await fetch('/api/calendar');
+      if (!res.ok) throw new Error('Failed to fetch calendar');
       const data = await res.json();
       if (Array.isArray(data)) {
         setEntries(data);
       }
     } catch (err) {
-      console.error('Failed to fetch calendar entries:', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -110,10 +130,11 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) {
-      setError('Title is required');
+    if (!newTitle.trim() || !newDate || !newTargetTime) {
+      setError('Please fill in all required fields');
       return;
     }
+
     setSubmitting(true);
     setError(null);
     try {
@@ -125,6 +146,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
           date: newDate,
           targetTime: newTargetTime,
           status: newStatus,
+          caption: newCaption.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -132,6 +154,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
 
       setIsCreateModalOpen(false);
       setNewTitle('');
+      setNewCaption('');
       fetchEntries();
     } catch (err: any) {
       setError(err.message);
@@ -162,6 +185,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
     try {
       const payload: any = {
         status: updateStatus,
+        caption: caption !== undefined ? caption : undefined,
       };
 
       if (updateStatus === 'POSTER_READY') {
@@ -211,22 +235,25 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
     }
   };
 
+  // FIX 2: Open Status Modal cleanly without modal stacking!
   const openStatusModal = (entry: CalendarEntryData) => {
+    setIsDetailModalOpen(false); // Close details modal first!
     setSelectedEntry(entry);
     setUpdateStatus(entry.status === 'PLANNED' ? 'POSTER_READY' : entry.status);
     setCreativeUrl(entry.creativeUrl || '');
     setCreativeType(entry.creativeType || 'IMAGE');
+    setCaption(entry.caption || '');
     setActualPostedDate(
       entry.actualPostedDate
-        ? new Date(entry.actualPostedDate).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0]
+        ? toLocalDateString(entry.actualPostedDate)
+        : toLocalDateString(new Date())
     );
     setActualPostedTime(entry.actualPostedTime || '12:00');
     setCancellationReason(entry.cancellationReason || '');
     setDelayedNewDate(
       entry.newDate
-        ? new Date(entry.newDate).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0]
+        ? toLocalDateString(entry.newDate)
+        : toLocalDateString(new Date())
     );
     setDelayedNewTargetTime(entry.newTargetTime || '12:00');
     setDelayReason(entry.delayReason || '');
@@ -234,8 +261,6 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
     setIsStatusModalOpen(true);
   };
 
-  // Color Coding helper per Section 23
-  // POSTER_READY = Blue, POSTED = Green, DELAYED = Orange, CANCELLED = Red
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'POSTER_READY':
@@ -268,8 +293,8 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
         );
       default:
         return (
-          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-200 text-slate-700 border border-slate-300">
-            <Clock className="h-3 w-3 text-slate-500" />
+          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#748D92]/30 text-[#212A31] border border-[#748D92]">
+            <Clock className="h-3 w-3 text-[#212A31]" />
             <span>PLANNED</span>
           </span>
         );
@@ -291,7 +316,6 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
     }
   };
 
-  // Date Nav Helpers
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
@@ -299,449 +323,228 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
   const todayMonth = () => setCurrentDate(new Date());
 
-  // Filter entries
   const filteredEntries = entries.filter((e) => {
     const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || e.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  // Days in month calculation
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
   const calendarDays = [];
-  // Prev month padding
   for (let i = firstDayOfMonth - 1; i >= 0; i--) {
     calendarDays.push({
       date: new Date(year, month - 1, daysInPrevMonth - i),
       isCurrentMonth: false,
     });
   }
-  // Current month days
   for (let d = 1; d <= daysInMonth; d++) {
     calendarDays.push({
       date: new Date(year, month, d),
       isCurrentMonth: true,
     });
   }
-  // Next month padding to fill grid
-  const remaining = 42 - calendarDays.length;
-  for (let i = 1; i <= remaining; i++) {
+  const remainingDays = 42 - calendarDays.length;
+  for (let d = 1; d <= remainingDays; d++) {
     calendarDays.push({
-      date: new Date(year, month + 1, i),
+      date: new Date(year, month + 1, d),
       isCurrentMonth: false,
     });
   }
 
-  // Week Days calculation (Weekly View)
-  const startOfWeek = new Date(currentDate);
-  const dayOfWeek = startOfWeek.getDay();
-  startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
-
-  const weekDays = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(startOfWeek);
-    d.setDate(d.getDate() + i);
-    weekDays.push(d);
-  }
-
-  const getEntriesForDate = (dateObj: Date) => {
-    const dateStr = dateObj.toISOString().split('T')[0];
-    return filteredEntries.filter((e) => {
-      const eDateStr = new Date(e.date).toISOString().split('T')[0];
-      return eDateStr === dateStr;
-    });
-  };
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Calendar Header Bar */}
-      <div className="sit-card p-4 sm:p-6 shadow-lg border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          <div className="p-3 rounded-2xl bg-cyan-50 text-cyan-600 border border-cyan-100 shadow-sm">
-            <CalendarIcon className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              {currentDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
-            </h2>
-            <p className="text-xs text-slate-500">
-              Content Calendar & Social Campaign Schedule
-            </p>
-          </div>
+    <div className="space-y-6 text-[#212A31] font-sans">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-[#212A31] flex items-center gap-2">
+            <CalendarIcon className="w-6 h-6 text-[#124E66]" /> Marketing Campaign Calendar
+          </h1>
+          <p className="text-xs text-[#2E3944] font-medium mt-1">
+            Schedule social media posters, manage captions, and track posting workflows.
+          </p>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Navigation Controls */}
-          <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
+        {canManage && (
+          <button
+            onClick={() => {
+              setNewDate(toLocalDateString(new Date()));
+              setIsCreateModalOpen(true);
+            }}
+            className="btn-primary px-4 py-2 text-xs font-bold flex items-center gap-1.5 shadow-md"
+          >
+            <Plus className="w-4 h-4" /> Add Calendar Entry
+          </button>
+        )}
+      </div>
+
+      {/* Control Bar: Filters & Views */}
+      <div className="sit-card p-4 bg-white border border-[#748D92] rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-soft">
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center bg-[#D3D9D4] rounded-xl p-1 border border-[#748D92]">
             <button
               onClick={prevMonth}
-              className="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:text-slate-900 transition-all"
+              className="p-1.5 hover:bg-white rounded-lg text-[#212A31] transition-all"
               title="Previous Month"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={todayMonth}
-              className="px-2.5 py-1 text-xs font-bold text-slate-700 hover:text-slate-900"
+              className="px-3 py-1 text-xs font-bold text-[#212A31] hover:bg-white rounded-lg transition-all"
             >
               Today
             </button>
             <button
               onClick={nextMonth}
-              className="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:text-slate-900 transition-all"
+              className="p-1.5 hover:bg-white rounded-lg text-[#212A31] transition-all"
               title="Next Month"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
-
-          {/* View Switcher Tabs */}
-          <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
-            <button
-              onClick={() => setViewMode('month')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'month'
-                  ? 'bg-white text-cyan-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Grid className="h-3.5 w-3.5" />
-              <span>Month</span>
-            </button>
-            <button
-              onClick={() => setViewMode('week')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'week'
-                  ? 'bg-white text-cyan-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-              <span>Week</span>
-            </button>
-            <button
-              onClick={() => setViewMode('agenda')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'agenda'
-                  ? 'bg-white text-cyan-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <List className="h-3.5 w-3.5" />
-              <span>Agenda</span>
-            </button>
-          </div>
-
-          {/* Create Button (Admins only) */}
-          {canManage && (
-            <button
-              onClick={() => {
-                setError(null);
-                setIsCreateModalOpen(true);
-              }}
-              className="inline-flex items-center space-x-1.5 px-4 py-2.5 rounded-xl btn-primary text-xs font-bold shadow-md"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Entry</span>
-            </button>
-          )}
+          <span className="text-base font-extrabold text-[#212A31] pl-2">
+            {monthNames[month]} {year}
+          </span>
         </div>
-      </div>
 
-      {/* Filter and Legend Bar */}
-      <div className="sit-card p-4 flex flex-col md:flex-row items-center justify-between gap-4 border-slate-200">
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#2E3944]" />
             <input
               type="text"
+              placeholder="Search campaigns..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter by title..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl sit-input text-xs font-medium"
+              className="w-full pl-9 pr-3.5 py-2 rounded-xl sit-input text-xs font-medium"
             />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-slate-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 rounded-xl sit-input text-xs font-medium"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="PLANNED">Planned</option>
-              <option value="POSTER_READY">Poster Ready (Blue)</option>
-              <option value="POSTED">Posted (Green)</option>
-              <option value="DELAYED">Delayed (Orange)</option>
-              <option value="CANCELLED">Cancelled (Red)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
-          <span className="text-slate-400 uppercase tracking-wider text-[10px]">Legend:</span>
-          <span className="px-2 py-0.5 rounded bg-blue-500 text-white">POSTER_READY</span>
-          <span className="px-2 py-0.5 rounded bg-emerald-600 text-white">POSTED</span>
-          <span className="px-2 py-0.5 rounded bg-amber-500 text-white">DELAYED</span>
-          <span className="px-2 py-0.5 rounded bg-rose-600 text-white">CANCELLED</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 rounded-xl sit-input text-xs font-medium"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="PLANNED">PLANNED</option>
+            <option value="POSTER_READY">POSTER READY</option>
+            <option value="POSTED">POSTED</option>
+            <option value="DELAYED">DELAYED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
         </div>
       </div>
 
-      {/* Main View Area */}
-      {loading ? (
-        <div className="sit-card p-12 text-center text-slate-400 text-xs font-medium">
-          Loading calendar entries...
+      {/* Month View Grid */}
+      <div className="sit-card bg-white border border-[#748D92] rounded-2xl overflow-hidden shadow-soft">
+        <div className="grid grid-cols-7 border-b border-[#748D92]/40 bg-[#212A31] text-white text-center text-xs font-extrabold py-3 uppercase tracking-wider">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
         </div>
-      ) : viewMode === 'month' ? (
-        /* MONTHLY VIEW */
-        <div className="sit-card overflow-hidden border-slate-200 shadow-xl">
-          {/* Days of Week Header */}
-          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-bold text-slate-600 uppercase tracking-wider py-3">
-            <div>Sun</div>
-            <div>Mon</div>
-            <div>Tue</div>
-            <div>Wed</div>
-            <div>Thu</div>
-            <div>Fri</div>
-            <div>Sat</div>
-          </div>
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-200 bg-slate-100">
-            {calendarDays.map((dayItem, idx) => {
-              const dayEntries = getEntriesForDate(dayItem.date);
-              const isToday =
-                new Date().toDateString() === dayItem.date.toDateString();
+        <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-[#748D92]/30 bg-white">
+          {calendarDays.map((day, idx) => {
+            const dayStr = toLocalDateString(day.date);
+            const isToday = dayStr === toLocalDateString(new Date());
 
-              return (
-                <div
-                  key={idx}
-                  className={`min-h-[120px] p-2 flex flex-col justify-between transition-colors ${
-                    dayItem.isCurrentMonth
-                      ? isToday
-                        ? 'bg-cyan-50/60'
-                        : 'bg-white'
-                      : 'bg-slate-50 text-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-xs font-bold ${
-                        isToday
-                          ? 'h-6 w-6 rounded-full bg-cyan-600 text-white flex items-center justify-center shadow-sm'
-                          : dayItem.isCurrentMonth
-                          ? 'text-slate-700'
-                          : 'text-slate-400'
-                      }`}
-                    >
-                      {dayItem.date.getDate()}
+            // FIX 4: Strict local date string comparison to eliminate Date Shift bug
+            const dayEntries = filteredEntries.filter(
+              (e) => toLocalDateString(e.date) === dayStr
+            );
+
+            return (
+              <div
+                key={idx}
+                className={`min-h-[110px] p-2 transition-all ${
+                  day.isCurrentMonth ? 'bg-white' : 'bg-[#D3D9D4]/30 text-slate-400'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span
+                    className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-extrabold ${
+                      isToday
+                        ? 'bg-[#124E66] text-white shadow-sm'
+                        : day.isCurrentMonth
+                        ? 'text-[#212A31]'
+                        : 'text-slate-400'
+                    }`}
+                  >
+                    {day.date.getDate()}
+                  </span>
+                  {dayEntries.length > 0 && (
+                    <span className="text-[10px] font-bold text-[#2E3944]">
+                      {dayEntries.length} {dayEntries.length === 1 ? 'item' : 'items'}
                     </span>
-                    {dayEntries.length > 0 && (
-                      <span className="text-[10px] font-bold font-mono px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-500">
-                        {dayEntries.length}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-1 space-y-1.5 overflow-y-auto max-h-24">
-                    {dayEntries.map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => {
-                          setSelectedEntry(item);
-                          setIsDetailModalOpen(true);
-                        }}
-                        className={`p-1.5 rounded-lg border text-left cursor-pointer transition-all hover:scale-[1.02] shadow-2xl ${getStatusBorderColor(
-                          item.status
-                        )} bg-white`}
-                      >
-                        <div className="flex items-center justify-between text-[10px] font-bold leading-tight">
-                          <span className="truncate text-slate-900 font-semibold">{item.title}</span>
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-[9px] text-slate-500">
-                          <span className="font-mono">{item.targetTime}</span>
-                          {getStatusBadge(item.status)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : viewMode === 'week' ? (
-        /* WEEKLY VIEW */
-        <div className="sit-card overflow-hidden border-slate-200 shadow-xl">
-          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-bold text-slate-600 py-3">
-            {weekDays.map((d, i) => (
-              <div key={i}>
-                <div>{d.toLocaleDateString(undefined, { weekday: 'short' })}</div>
-                <div
-                  className={`text-sm mt-0.5 ${
-                    new Date().toDateString() === d.toDateString()
-                      ? 'text-cyan-600 font-extrabold'
-                      : 'text-slate-900 font-semibold'
-                  }`}
-                >
-                  {d.getDate()}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 divide-x divide-slate-200 bg-white min-h-[400px]">
-            {weekDays.map((d, i) => {
-              const dayEntries = getEntriesForDate(d);
-              return (
-                <div key={i} className="p-2 space-y-2 bg-slate-50/30">
-                  {dayEntries.length === 0 ? (
-                    <div className="text-[11px] text-slate-400 text-center pt-8">No entries</div>
-                  ) : (
-                    dayEntries.map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => {
-                          setSelectedEntry(item);
-                          setIsDetailModalOpen(true);
-                        }}
-                        className={`p-2.5 rounded-xl border bg-white shadow-sm cursor-pointer hover:shadow-md transition-all ${getStatusBorderColor(
-                          item.status
-                        )} space-y-1.5`}
-                      >
-                        <span className="text-xs font-bold text-slate-900 block leading-snug line-clamp-2">
-                          {item.title}
-                        </span>
-                        <div className="flex items-center justify-between text-[10px] text-slate-500">
-                          <span className="font-mono font-medium">{item.targetTime}</span>
-                          {getStatusBadge(item.status)}
-                        </div>
-                      </div>
-                    ))
                   )}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        /* AGENDA / LIST VIEW */
-        <div className="sit-card overflow-hidden border-slate-200 shadow-xl">
-          {filteredEntries.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 text-xs space-y-2">
-              <CalendarIcon className="h-8 w-8 text-slate-300 mx-auto" />
-              <p>No calendar entries found matching filters.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-200">
-              {filteredEntries.map((item) => (
-                <div
-                  key={item.id}
-                  className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors ${getStatusBorderColor(
-                    item.status
-                  )} bg-white`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-bold text-slate-900 text-sm sm:text-base">
-                        {item.title}
-                      </h4>
-                      {getStatusBadge(item.status)}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 font-medium">
-                      <span className="flex items-center space-x-1">
-                        <CalendarIcon className="h-3.5 w-3.5 text-cyan-600" />
-                        <span>{new Date(item.date).toLocaleDateString()}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <Clock className="h-3.5 w-3.5 text-cyan-600" />
-                        <span className="font-mono">{item.targetTime}</span>
-                      </span>
-                      <span>By {item.createdBy}</span>
-                    </div>
 
-                    {/* Additional fields info if present */}
-                    {item.status === 'POSTER_READY' && item.creativeUrl && (
-                      <div className="pt-1 flex items-center space-x-2 text-xs text-blue-600 font-medium">
-                        {item.creativeType === 'VIDEO' ? (
-                          <VideoIcon className="h-3.5 w-3.5" />
-                        ) : (
-                          <ImageIcon className="h-3.5 w-3.5" />
-                        )}
-                        <span>Poster Creative Ready ({item.creativeType})</span>
-                      </div>
-                    )}
-                    {item.status === 'POSTED' && item.actualPostedDate && (
-                      <p className="text-xs text-emerald-600 font-medium">
-                        Posted on {new Date(item.actualPostedDate).toLocaleDateString()} at{' '}
-                        {item.actualPostedTime}
-                      </p>
-                    )}
-                    {item.status === 'CANCELLED' && item.cancellationReason && (
-                      <p className="text-xs text-rose-600 font-medium">
-                        Reason: {item.cancellationReason}
-                      </p>
-                    )}
-                    {item.status === 'DELAYED' && item.newDate && (
-                      <p className="text-xs text-amber-600 font-medium">
-                        Postponed to {new Date(item.newDate).toLocaleDateString()} at{' '}
-                        {item.newTargetTime} ({item.delayReason})
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center space-x-2 self-end sm:self-center">
-                    <button
+                <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+                  {dayEntries.map((entry) => (
+                    <div
+                      key={entry.id}
                       onClick={() => {
-                        setSelectedEntry(item);
+                        setSelectedEntry(entry);
                         setIsDetailModalOpen(true);
                       }}
-                      className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-                      title="View Details"
+                      className={`p-1.5 rounded-lg text-xs cursor-pointer transition-all hover:scale-[1.02] bg-white border border-[#748D92]/60 shadow-sm ${getStatusBorderColor(
+                        entry.status
+                      )}`}
                     >
-                      <Eye className="h-4 w-4" />
-                    </button>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="font-extrabold text-[#212A31] truncate text-[11px]">
+                          {entry.title}
+                        </span>
+                        <span className="font-mono text-[10px] text-[#2E3944] font-semibold flex-shrink-0">
+                          {entry.targetTime}
+                        </span>
+                      </div>
 
-                    <button
-                      onClick={() => openStatusModal(item)}
-                      className="px-3 py-1.5 rounded-lg btn-secondary text-xs font-semibold flex items-center space-x-1"
-                    >
-                      <Edit className="h-3.5 w-3.5" />
-                      <span>Update Status</span>
-                    </button>
+                      {/* ADD 1: Independent Media & Caption Status indicators */}
+                      <div className="flex items-center gap-1 mt-1">
+                        {entry.creativeUrl ? (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-800">
+                            Media: Uploaded
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 text-slate-600">
+                            Media: Pending
+                          </span>
+                        )}
 
-                    {canManage && (
-                      <button
-                        onClick={() => handleDeleteEntry(item.id, item.title)}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Delete Entry"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
+                        {entry.caption ? (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-blue-100 text-blue-800">
+                            Caption: Added
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 text-slate-600">
+                            Caption: Pending
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
 
-      {/* CREATE ENTRY MODAL */}
+      {/* CREATE CALENDAR ENTRY MODAL */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-md sit-card shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-sm font-bold text-slate-900">Create Calendar Entry</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#212A31]/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg sit-card bg-white border border-[#748D92] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#748D92]/30 bg-[#D3D9D4]/50">
+              <h3 className="text-sm font-extrabold text-[#212A31]">Create Campaign Entry</h3>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                className="p-1 text-[#212A31]/60 hover:text-[#212A31] rounded-lg"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -755,14 +558,14 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
               )}
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Title <span className="text-cyan-600">*</span>
+                <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
+                  Title <span className="text-[#124E66]">*</span>
                 </label>
                 <input
                   type="text"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Independence Day Special Poster Campaign"
+                  placeholder="e.g. Independence Day Special Poster"
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl sit-input text-xs font-medium"
                 />
@@ -770,8 +573,8 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Date <span className="text-cyan-600">*</span>
+                  <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
+                    Date <span className="text-[#124E66]">*</span>
                   </label>
                   <input
                     type="date"
@@ -782,9 +585,10 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                   />
                 </div>
 
+                {/* ADD 2: Standard Clean Time Picker */}
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Target Time <span className="text-cyan-600">*</span>
+                  <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
+                    Target Time <span className="text-[#124E66]">*</span>
                   </label>
                   <input
                     type="time"
@@ -796,8 +600,23 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                 </div>
               </div>
 
+              {/* ADD 1: Independent Caption Field */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider flex items-center justify-between">
+                  <span>Caption (Social Team)</span>
+                  <span className="text-[10px] text-[#2E3944] font-normal lowercase">Optional</span>
+                </label>
+                <textarea
+                  value={newCaption}
+                  onChange={(e) => setNewCaption(e.target.value)}
+                  rows={3}
+                  placeholder="Write campaign caption text, hashtags, and social copy..."
+                  className="w-full px-3.5 py-2.5 rounded-xl sit-input text-xs font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
                   Initial Status
                 </label>
                 <select
@@ -806,14 +625,14 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                   className="w-full px-3.5 py-2.5 rounded-xl sit-input text-xs font-medium"
                 >
                   <option value="PLANNED">PLANNED</option>
-                  <option value="POSTER_READY">POSTER_READY (Blue)</option>
-                  <option value="POSTED">POSTED (Green)</option>
-                  <option value="DELAYED">DELAYED (Orange)</option>
-                  <option value="CANCELLED">CANCELLED (Red)</option>
+                  <option value="POSTER_READY">POSTER READY</option>
+                  <option value="POSTED">POSTED</option>
+                  <option value="DELAYED">DELAYED</option>
+                  <option value="CANCELLED">CANCELLED</option>
                 </select>
               </div>
 
-              <div className="pt-4 flex justify-end space-x-2">
+              <div className="pt-4 flex justify-end space-x-2 border-t border-[#748D92]/30">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
@@ -824,7 +643,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 text-xs font-bold btn-primary disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-bold btn-primary"
                 >
                   {submitting ? 'Creating...' : 'Create Entry'}
                 </button>
@@ -834,18 +653,18 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
         </div>
       )}
 
-      {/* UPDATE STATUS MODAL (Section 23 & Section 24 Workflow) */}
+      {/* UPDATE STATUS MODAL (Independent Media & Caption Workflow) */}
       {isStatusModalOpen && selectedEntry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-lg sit-card shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#212A31]/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg sit-card bg-white border border-[#748D92] rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#748D92]/30 bg-[#D3D9D4]/50 sticky top-0 z-10">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Update Calendar Status</h3>
-                <p className="text-xs text-slate-500">{selectedEntry.title}</p>
+                <h3 className="text-sm font-extrabold text-[#212A31]">Update Calendar Entry</h3>
+                <p className="text-xs text-[#2E3944] font-medium">{selectedEntry.title}</p>
               </div>
               <button
                 onClick={() => setIsStatusModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                className="p-1 text-[#212A31]/60 hover:text-[#212A31] rounded-lg"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -859,8 +678,8 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
               )}
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Select Status
+                <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
+                  Select Workflow Status
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -869,7 +688,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                     className={`p-3 rounded-xl border text-left flex items-center space-x-2 text-xs font-bold transition-all ${
                       updateStatus === 'POSTER_READY'
                         ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                        : 'border-[#748D92]/60 hover:bg-[#D3D9D4]/30 text-[#212A31]'
                     }`}
                   >
                     <FileCheck className="h-4 w-4 text-blue-500" />
@@ -882,7 +701,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                     className={`p-3 rounded-xl border text-left flex items-center space-x-2 text-xs font-bold transition-all ${
                       updateStatus === 'POSTED'
                         ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                        : 'border-[#748D92]/60 hover:bg-[#D3D9D4]/30 text-[#212A31]'
                     }`}
                   >
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -895,7 +714,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                     className={`p-3 rounded-xl border text-left flex items-center space-x-2 text-xs font-bold transition-all ${
                       updateStatus === 'DELAYED'
                         ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                        : 'border-[#748D92]/60 hover:bg-[#D3D9D4]/30 text-[#212A31]'
                     }`}
                   >
                     <AlertTriangle className="h-4 w-4 text-amber-500" />
@@ -908,7 +727,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                     className={`p-3 rounded-xl border text-left flex items-center space-x-2 text-xs font-bold transition-all ${
                       updateStatus === 'CANCELLED'
                         ? 'border-rose-500 bg-rose-50 text-rose-700 shadow-sm'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                        : 'border-[#748D92]/60 hover:bg-[#D3D9D4]/30 text-[#212A31]'
                     }`}
                   >
                     <XCircle className="h-4 w-4 text-rose-600" />
@@ -917,15 +736,26 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                 </div>
               </div>
 
-              {/* DYNAMIC ADDITIONAL FIELDS PER STATUS (Section 23 & 24) */}
-              {updateStatus === 'POSTER_READY' && (
-                <div className="space-y-3 pt-2 border-t border-slate-200">
+              {/* ADD 1 & 5: Social Team Caption Management */}
+              <div className="space-y-1 pt-2 border-t border-[#748D92]/30">
+                <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider flex items-center justify-between">
+                  <span>Social Team: Caption Text</span>
+                </label>
+                <textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  rows={3}
+                  placeholder="Manage campaign caption, post hashtags, or copy..."
+                  className="w-full px-3.5 py-2.5 rounded-xl sit-input text-xs font-medium"
+                />
+              </div>
+
+              {/* FIX 5: Media Upload strictly available to Admins / Graphics team */}
+              {canManage && updateStatus === 'POSTER_READY' && (
+                <div className="space-y-3 pt-2 border-t border-[#748D92]/30">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-                      <span>Upload Creative (Image or Video)</span>
-                      <span className="text-blue-600 text-[11px] lowercase font-normal">
-                        Supported: JPG, PNG, WEBP, MP4, MOV, WEBM
-                      </span>
+                    <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider flex items-center justify-between">
+                      <span>Graphics Team: Upload Creative</span>
                     </label>
                     <MediaUploader
                       value={creativeUrl}
@@ -941,10 +771,10 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
               )}
 
               {updateStatus === 'POSTED' && (
-                <div className="space-y-3 pt-2 border-t border-slate-200">
+                <div className="space-y-3 pt-2 border-t border-[#748D92]/30">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
                         Actual Posted Date
                       </label>
                       <input
@@ -956,7 +786,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
                         Actual Posted Time
                       </label>
                       <input
@@ -972,9 +802,9 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
               )}
 
               {updateStatus === 'CANCELLED' && (
-                <div className="space-y-3 pt-2 border-t border-slate-200">
+                <div className="space-y-3 pt-2 border-t border-[#748D92]/30">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
                       Cancellation Reason
                     </label>
                     <textarea
@@ -990,10 +820,10 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
               )}
 
               {updateStatus === 'DELAYED' && (
-                <div className="space-y-3 pt-2 border-t border-slate-200">
+                <div className="space-y-3 pt-2 border-t border-[#748D92]/30">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
                         New Date
                       </label>
                       <input
@@ -1005,7 +835,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
                         New Target Time
                       </label>
                       <input
@@ -1018,7 +848,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
                       Delay Reason
                     </label>
                     <textarea
@@ -1033,7 +863,8 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                 </div>
               )}
 
-              <div className="pt-4 flex justify-end space-x-2 border-t border-slate-200">
+              {/* FIX 3: Clean button text "Update Status" */}
+              <div className="pt-4 flex justify-end space-x-2 border-t border-[#748D92]/30">
                 <button
                   type="button"
                   onClick={() => setIsStatusModalOpen(false)}
@@ -1056,16 +887,16 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
 
       {/* VIEW ENTRY DETAILS MODAL */}
       {isDetailModalOpen && selectedEntry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-lg sit-card shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#212A31]/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg sit-card bg-white border border-[#748D92] rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#748D92]/30 bg-[#D3D9D4]/50">
               <div className="flex items-center space-x-2">
-                <Info className="h-5 w-5 text-cyan-600" />
-                <h3 className="text-sm font-bold text-slate-900">Calendar Entry Details</h3>
+                <Info className="h-5 w-5 text-[#124E66]" />
+                <h3 className="text-sm font-extrabold text-[#212A31]">Calendar Entry Details</h3>
               </div>
               <button
                 onClick={() => setIsDetailModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                className="p-1 text-[#212A31]/60 hover:text-[#212A31] rounded-lg"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1074,56 +905,72 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
             <div className="p-6 space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 leading-snug">
+                  <h2 className="text-lg font-extrabold text-[#212A31] leading-snug">
                     {selectedEntry.title}
                   </h2>
-                  <p className="text-xs text-slate-500">Created by {selectedEntry.createdBy}</p>
+                  <p className="text-xs text-[#2E3944] font-medium">Created by {selectedEntry.createdBy}</p>
                 </div>
                 <div>{getStatusBadge(selectedEntry.status)}</div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+              <div className="grid grid-cols-2 gap-4 p-3 rounded-xl bg-[#D3D9D4]/50 border border-[#748D92]/40 text-xs">
                 <div>
-                  <span className="text-slate-400 font-bold block uppercase text-[10px]">
+                  <span className="text-[#2E3944] font-bold block uppercase text-[10px]">
                     Target Date
                   </span>
-                  <span className="font-semibold text-slate-800">
-                    {new Date(selectedEntry.date).toLocaleDateString()}
+                  <span className="font-extrabold text-[#212A31]">
+                    {toLocalDateString(selectedEntry.date)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 font-bold block uppercase text-[10px]">
+                  <span className="text-[#2E3944] font-bold block uppercase text-[10px]">
                     Target Time
                   </span>
-                  <span className="font-mono font-semibold text-slate-800">
+                  <span className="font-mono font-extrabold text-[#212A31]">
                     {selectedEntry.targetTime}
                   </span>
                 </div>
               </div>
 
-              {/* Status Specific Details */}
-              {selectedEntry.status === 'POSTER_READY' && selectedEntry.creativeUrl && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Completed Creative Preview
-                  </h4>
-                  <div className="rounded-xl overflow-hidden bg-slate-900 border border-slate-200 min-h-[200px] flex items-center justify-center">
-                    {selectedEntry.creativeType === 'VIDEO' ? (
-                      <video src={selectedEntry.creativeUrl} controls className="w-full max-h-[300px]" />
-                    ) : (
-                      <img src={selectedEntry.creativeUrl} alt="Poster Creative" className="w-full object-cover max-h-[300px]" />
-                    )}
+              {/* Caption Section (Visible to all) */}
+              {selectedEntry.caption && (
+                <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-1">
+                  <span className="font-bold block uppercase text-[10px] text-blue-700">
+                    Campaign Caption:
+                  </span>
+                  <p className="whitespace-pre-wrap font-medium">{selectedEntry.caption}</p>
+                </div>
+              )}
+
+              {/* FIX 5: Media Visibility Permissions - ONLY Admins can view uploaded media */}
+              {canManage ? (
+                selectedEntry.status === 'POSTER_READY' && selectedEntry.creativeUrl && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
+                      Completed Creative Preview (Admin Only)
+                    </h4>
+                    <div className="rounded-xl overflow-hidden bg-slate-900 border border-[#748D92] min-h-[180px] flex items-center justify-center">
+                      {selectedEntry.creativeType === 'VIDEO' ? (
+                        <video src={selectedEntry.creativeUrl} controls className="w-full max-h-[300px]" />
+                      ) : (
+                        <img src={selectedEntry.creativeUrl} alt="Poster Creative" className="w-full object-cover max-h-[300px]" />
+                      )}
+                    </div>
                   </div>
+                )
+              ) : (
+                <div className="p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600 font-medium">
+                  <span className="font-bold text-slate-800">Media Access Note:</span> Uploaded poster files are accessible only to Organization Admins.
                 </div>
               )}
 
               {selectedEntry.status === 'POSTED' && (
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 space-y-1 font-medium">
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 space-y-1 font-medium">
                   <p className="font-bold">Published Confirmation:</p>
                   <p>
                     Posted on:{' '}
                     {selectedEntry.actualPostedDate
-                      ? new Date(selectedEntry.actualPostedDate).toLocaleDateString()
+                      ? toLocalDateString(selectedEntry.actualPostedDate)
                       : 'N/A'}
                   </p>
                   <p>Posted time: {selectedEntry.actualPostedTime || 'N/A'}</p>
@@ -1131,19 +978,19 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
               )}
 
               {selectedEntry.status === 'CANCELLED' && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-1 font-medium">
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-1 font-medium">
                   <p className="font-bold">Cancellation Details:</p>
                   <p>{selectedEntry.cancellationReason}</p>
                 </div>
               )}
 
               {selectedEntry.status === 'DELAYED' && (
-                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 space-y-1 font-medium">
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1 font-medium">
                   <p className="font-bold">Postponed Schedule:</p>
                   <p>
                     New Date:{' '}
                     {selectedEntry.newDate
-                      ? new Date(selectedEntry.newDate).toLocaleDateString()
+                      ? toLocalDateString(selectedEntry.newDate)
                       : 'N/A'}
                   </p>
                   <p>New Target Time: {selectedEntry.newTargetTime}</p>
@@ -1151,14 +998,24 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                 </div>
               )}
 
-              <div className="pt-4 flex justify-end space-x-2 border-t border-slate-200">
-                <button
-                  onClick={() => openStatusModal(selectedEntry)}
-                  className="px-4 py-2 rounded-xl btn-primary text-xs font-bold"
-                >
-                  Update Status / Creative
-                </button>
-              </div>
+              {/* FIX 2 & FIX 3: Clean button text "Update Status", calls openStatusModal which closes details modal */}
+              {canManage && (
+                <div className="pt-4 flex items-center justify-between border-t border-[#748D92]/30">
+                  <button
+                    onClick={() => handleDeleteEntry(selectedEntry.id, selectedEntry.title)}
+                    className="px-3 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 text-xs font-semibold flex items-center gap-1"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete Entry
+                  </button>
+
+                  <button
+                    onClick={() => openStatusModal(selectedEntry)}
+                    className="px-4 py-2 rounded-xl btn-primary text-xs font-bold"
+                  >
+                    Update Status
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

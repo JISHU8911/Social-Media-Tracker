@@ -29,15 +29,15 @@ interface AnalyticsData {
   postMetrics: { title: string; submissions: number }[];
 }
 
-const PLATFORM_COLORS = ['#3b82f6', '#ec4899', '#0284c7', '#64748b'];
+const PLATFORM_COLORS = ['#124E66', '#748D92', '#2E3944', '#212A31'];
 const INTERACTION_COLORS = [
-  '#06b6d4',
-  '#3b82f6',
-  '#8b5cf6',
-  '#10b981',
-  '#f59e0b',
-  '#0284c7',
-  '#6366f1',
+  '#124E66',
+  '#748D92',
+  '#2E3944',
+  '#212A31',
+  '#0E3E52',
+  '#242D36',
+  '#192026',
 ];
 
 export default function AnalyticsDashboardPage() {
@@ -48,9 +48,9 @@ export default function AnalyticsDashboardPage() {
   useEffect(() => {
     fetch('/api/auth/me')
       .then((res) => {
-        if (!res.ok) router.push('/admin/login');
+        if (!res.ok) router.push('/login');
       })
-      .catch(() => router.push('/admin/login'));
+      .catch(() => router.push('/login'));
 
     fetch('/api/analytics')
       .then((res) => res.json())
@@ -61,99 +61,107 @@ export default function AnalyticsDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
-        <div className="text-xs font-semibold text-slate-500">Loading SIT analytics...</div>
+      <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] flex flex-col font-sans">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="sit-card p-8 text-center text-xs font-bold text-[#2E3944] animate-pulse">
+            Compiling SIT Analytics Engine Data...
+          </div>
+        </div>
       </div>
     );
   }
 
+  const summary = data?.summary || {
+    totalPosts: 0,
+    totalSubmissions: 0,
+    totalEmployeesParticipated: 0,
+    totalInteractions: 0,
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Header */}
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 text-xs font-semibold mb-2">
+          <div className="flex items-center space-x-2 text-xs font-bold text-[#124E66] mb-1">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>SIT Analytics Engine</span>
+            <span>Analytical Engine Report</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Analytics & Engagement Metrics
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31] tracking-tight">
+            Analytics Overview
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Real-time engagement breakdown across social media platforms and specific employee actions.
+          <p className="text-xs sm:text-sm text-[#2E3944] font-medium">
+            Aggregated workforce interaction metrics across social media platforms.
           </p>
         </div>
 
-        {/* Summary KPI Cards */}
-        {data?.summary && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="sit-card p-5 space-y-2 border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Total Submissions
-              </span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-                {data.summary.totalSubmissions}
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">Recorded employee responses</p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="sit-card-stat p-5 space-y-1">
+            <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider block">
+              Total Campaigns
+            </span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+              {summary.totalPosts}
             </div>
-
-            <div className="sit-card p-5 space-y-2 border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Unique Participants
-              </span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600">
-                {data.summary.totalEmployeesParticipated}
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">Workforce active participation</p>
-            </div>
-
-            <div className="sit-card p-5 space-y-2 border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Total Actions Logged
-              </span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-cyan-600">
-                {data.summary.totalInteractions}
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">Likes, comments, shares, etc.</p>
-            </div>
-
-            <div className="sit-card p-5 space-y-2 border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Total Active Posts
-              </span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-purple-600">
-                {data.summary.totalPosts}
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">Active SIT post campaigns</p>
-            </div>
+            <span className="text-[10px] text-[#748D92] font-semibold">Active Posts</span>
           </div>
-        )}
 
-        {/* Charts Row 1: Platform Distribution & Interaction Types */}
+          <div className="sit-card-stat p-5 space-y-1">
+            <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider block">
+              Total Submissions
+            </span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+              {summary.totalSubmissions}
+            </div>
+            <span className="text-[10px] text-[#748D92] font-semibold">Logged Employee Responses</span>
+          </div>
+
+          <div className="sit-card-stat p-5 space-y-1">
+            <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider block">
+              Participated Members
+            </span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+              {summary.totalEmployeesParticipated}
+            </div>
+            <span className="text-[10px] text-[#748D92] font-semibold">Unique Active Users</span>
+          </div>
+
+          <div className="sit-card-stat p-5 space-y-1">
+            <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider block">
+              Total Interactions
+            </span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+              {summary.totalInteractions}
+            </div>
+            <span className="text-[10px] text-[#748D92] font-semibold">Aggregated Likes, Shares & Comments</span>
+          </div>
+        </div>
+
+        {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Platform Distribution Pie Chart */}
-          <div className="sit-card p-6 border-slate-200 space-y-4 shadow-sm">
-            <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5 text-cyan-600" />
-              <span>Platform Engagement Metrics</span>
-            </h3>
-            <p className="text-xs text-slate-500">
-              Breakdown of total submissions per social media platform.
-            </p>
+          <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-extrabold text-[#212A31]">Platform Distribution</h2>
+              <span className="text-xs font-bold text-[#124E66]">Channels</span>
+            </div>
 
-            <div className="h-72 w-full pt-4">
+            <div className="h-64 sm:h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={data?.platformData || []}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
+                    labelLine={false}
+                    outerRadius={90}
+                    fill="#8884d8"
                     dataKey="count"
-                    label={({ name, count }) => `${name}: ${count}`}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                   >
                     {(data?.platformData || []).map((entry, index) => (
                       <Cell
@@ -164,11 +172,11 @@ export default function AnalyticsDashboardPage() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#ffffff',
-                      borderColor: '#e2e8f0',
-                      borderRadius: '0.75rem',
-                      color: '#0f172a',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      backgroundColor: '#212A31',
+                      borderColor: '#748D92',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      fontSize: '12px',
                     }}
                   />
                   <Legend />
@@ -177,34 +185,31 @@ export default function AnalyticsDashboardPage() {
             </div>
           </div>
 
-          {/* Detailed Interaction Breakdown Bar Chart */}
-          <div className="sit-card p-6 border-slate-200 space-y-4 shadow-sm">
-            <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-              <Activity className="h-5 w-5 text-purple-600" />
-              <span>Interaction Action Counts</span>
-            </h3>
-            <p className="text-xs text-slate-500">
-              Counts of Likes, Comments, Shares, Stories, Reposts, Replies, & Quote Posts.
-            </p>
+          {/* Interaction Types Bar Chart */}
+          <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-extrabold text-[#212A31]">Action Types Breakdown</h2>
+              <span className="text-xs font-bold text-[#124E66]">Engagement</span>
+            </div>
 
-            <div className="h-72 w-full pt-4">
+            <div className="h-64 sm:h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data?.interactionData || []}>
-                  <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={11} />
+                  <XAxis dataKey="name" stroke="#748D92" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#748D92" fontSize={11} tickLine={false} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#ffffff',
-                      borderColor: '#e2e8f0',
-                      borderRadius: '0.75rem',
-                      color: '#0f172a',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      backgroundColor: '#212A31',
+                      borderColor: '#748D92',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      fontSize: '12px',
                     }}
                   />
-                  <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                  <Bar dataKey="count" fill="#124E66" radius={[6, 6, 0, 0]}>
                     {(data?.interactionData || []).map((entry, index) => (
                       <Cell
-                        key={`cell-bar-${index}`}
+                        key={`bar-${index}`}
                         fill={INTERACTION_COLORS[index % INTERACTION_COLORS.length]}
                       />
                     ))}
@@ -215,33 +220,34 @@ export default function AnalyticsDashboardPage() {
           </div>
         </div>
 
-        {/* Charts Row 2: Post Participation Breakdown */}
-        <div className="sit-card p-6 border-slate-200 space-y-4 shadow-sm">
-          <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-            <CheckCircle className="h-5 w-5 text-emerald-600" />
-            <span>Top Posts Participation Breakdown</span>
-          </h3>
-          <p className="text-xs text-slate-500">
-            Number of submissions recorded per post campaign.
-          </p>
+        {/* Top Performing Posts Table */}
+        <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-extrabold text-[#212A31]">Top Performing Campaign Posts</h2>
+            <span className="text-xs font-bold text-[#124E66]">Rankings</span>
+          </div>
 
-          <div className="h-72 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data?.postMetrics || []} layout="vertical">
-                <XAxis type="number" stroke="#64748b" fontSize={11} />
-                <YAxis dataKey="title" type="category" stroke="#64748b" fontSize={11} width={180} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#ffffff',
-                    borderColor: '#e2e8f0',
-                    borderRadius: '0.75rem',
-                    color: '#0f172a',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  }}
-                />
-                <Bar dataKey="submissions" fill="#06b6d4" radius={[0, 8, 8, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="overflow-x-auto rounded-xl border border-[#748D92]">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#212A31] text-white font-bold uppercase tracking-wider">
+                <tr>
+                  <th className="px-4 py-3">Rank</th>
+                  <th className="px-4 py-3">Campaign Title</th>
+                  <th className="px-4 py-3 text-right">Submissions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#748D92]/30 font-medium">
+                {(data?.postMetrics || []).map((post, idx) => (
+                  <tr key={idx} className="hover:bg-[#D3D9D4]/40 transition-colors">
+                    <td className="px-4 py-3 font-bold text-[#124E66]">#{idx + 1}</td>
+                    <td className="px-4 py-3 text-[#212A31] font-bold">{post.title}</td>
+                    <td className="px-4 py-3 text-right font-extrabold text-[#212A31]">
+                      {post.submissions}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </main>

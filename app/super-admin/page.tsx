@@ -13,9 +13,7 @@ import {
   Check,
   Ban,
   Trash2,
-  Key,
   Users,
-  Award,
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
@@ -70,9 +68,7 @@ export default function PlatformSuperAdminPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to approve organization');
-      setSuccess(
-        `Approved ${data.organization.name}! Generated Org ID: ${data.organization.orgId}, Unique Code: ${data.organization.uniqueCode}`
-      );
+      setSuccess(`Organization ${data.organization.name} APPROVED successfully.`);
       fetchOrganizations();
     } catch (err: any) {
       setError(err.message);
@@ -82,7 +78,6 @@ export default function PlatformSuperAdminPage() {
   };
 
   const handleReject = async (id: string) => {
-    if (!confirm('Are you sure you want to reject this organization registration?')) return;
     setActionLoading(id);
     setError(null);
     setSuccess(null);
@@ -92,7 +87,7 @@ export default function PlatformSuperAdminPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to reject organization');
-      setSuccess(`Organization registration rejected.`);
+      setSuccess('Organization REJECTED successfully.');
       fetchOrganizations();
     } catch (err: any) {
       setError(err.message);
@@ -155,117 +150,179 @@ export default function PlatformSuperAdminPage() {
   const pendingOrgs = orgs.filter((o) => o.status === 'PENDING');
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Header Banner */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900 border border-indigo-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-soft">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+            <div className="w-12 h-12 rounded-xl bg-[#124E66] flex items-center justify-center text-white shadow-md">
               <ShieldAlert className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Platform Super Admin Dashboard</h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Global Organization Approvals, Access Management, and Multi-Tenant Control.
+              <h1 className="text-2xl font-extrabold text-[#212A31]">Platform Super Admin Dashboard</h1>
+              <p className="text-xs text-[#2E3944] font-medium mt-0.5">
+                Global Organization Approvals, Access Management, and Multi-Tenant Governance.
               </p>
             </div>
           </div>
           <button
             onClick={fetchOrganizations}
-            className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-semibold flex items-center gap-2 text-indigo-400"
+            className="btn-secondary px-4 py-2 text-xs font-semibold flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" /> Refresh Data
           </button>
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-3">
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-3 font-medium">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-3">
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm flex items-center gap-3 font-medium">
             <CheckCircle className="w-5 h-5 shrink-0" />
             <span>{success}</span>
           </div>
         )}
 
-        {/* Pending Approval Section */}
-        {pendingOrgs.length > 0 && (
-          <section className="space-y-4">
+        {/* Dashboard Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
-                Pending Organization Approvals ({pendingOrgs.length})
-              </h2>
+              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                Total Organizations
+              </span>
+              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
+                <Building2 className="h-5 w-5 text-[#212A31]" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+              {orgs.length}
+            </div>
+            <p className="text-[11px] text-[#2E3944] font-medium">Registered tenants</p>
+          </div>
+
+          <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                Pending Approvals
+              </span>
+              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
+                <AlertCircle className="h-5 w-5 text-[#212A31]" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#124E66]">
+              {pendingOrgs.length}
+            </div>
+            <p className="text-[11px] text-[#2E3944] font-medium">Awaiting action</p>
+          </div>
+
+          <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                Active Tenants
+              </span>
+              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
+                <CheckCircle className="h-5 w-5 text-[#212A31]" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+              {orgs.filter((o) => o.status === 'ACTIVE').length}
+            </div>
+            <p className="text-[11px] text-[#2E3944] font-medium">Live workspaces</p>
+          </div>
+
+          <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                Suspended / Rejected
+              </span>
+              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
+                <XCircle className="h-5 w-5 text-[#212A31]" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+              {orgs.filter((o) => o.status === 'SUSPENDED' || o.status === 'REJECTED').length}
+            </div>
+            <p className="text-[11px] text-[#2E3944] font-medium">Inactive workspaces</p>
+          </div>
+        </div>
+
+        {/* Pending Approvals Table */}
+        {pendingOrgs.length > 0 && (
+          <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-extrabold text-[#212A31]">Pending Organization Registrations</h2>
+              <span className="text-xs font-bold text-[#124E66]">{pendingOrgs.length} Pending</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {pendingOrgs.map((org) => (
-                <div
-                  key={org.id}
-                  className="p-6 rounded-2xl bg-slate-900/90 border border-amber-500/30 hover:border-amber-500/60 transition-all space-y-4 shadow-lg"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-base font-bold text-white">{org.name}</h3>
-                      <p className="text-xs text-slate-400 mt-1">Email: {org.officialEmail}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Registered: {new Date(org.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-semibold text-xs uppercase tracking-wider">
-                      PENDING
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-2">
-                    <button
-                      onClick={() => handleApprove(org.id)}
-                      disabled={actionLoading === org.id}
-                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 disabled:opacity-50"
-                    >
-                      <Check className="w-4 h-4" /> Approve & Generate ID
-                    </button>
-                    <button
-                      onClick={() => handleReject(org.id)}
-                      disabled={actionLoading === org.id}
-                      className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md shadow-rose-600/20 disabled:opacity-50"
-                    >
-                      <XCircle className="w-4 h-4" /> Reject
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto rounded-xl border border-[#748D92]">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#212A31] text-white font-bold uppercase tracking-wider">
+                  <tr>
+                    <th className="px-4 py-3">Organization Name</th>
+                    <th className="px-4 py-3">Official Email</th>
+                    <th className="px-4 py-3">Registered Date</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#748D92]/30 font-medium">
+                  {pendingOrgs.map((org) => (
+                    <tr key={org.id} className="hover:bg-[#D3D9D4]/40 transition-colors">
+                      <td className="px-4 py-3 font-bold text-[#212A31]">{org.name}</td>
+                      <td className="px-4 py-3 text-[#2E3944] font-mono">{org.officialEmail}</td>
+                      <td className="px-4 py-3 text-[#748D92] font-mono">
+                        {new Date(org.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-right space-x-2">
+                        <button
+                          onClick={() => handleApprove(org.id)}
+                          disabled={actionLoading === org.id}
+                          className="btn-primary px-3 py-1.5 text-xs font-bold inline-flex items-center gap-1 shadow-sm"
+                        >
+                          <Check className="w-3.5 h-3.5" /> Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(org.id)}
+                          disabled={actionLoading === org.id}
+                          className="btn-danger px-3 py-1.5 text-xs font-bold inline-flex items-center gap-1 shadow-sm"
+                        >
+                          <XCircle className="w-3.5 h-3.5" /> Reject
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </section>
+          </div>
         )}
 
-        {/* Organizations List Section */}
-        <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <h2 className="text-lg font-bold text-white">Organizations Directory</h2>
+        {/* Organizations Management Table */}
+        <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-base font-extrabold text-[#212A31]">All Registered Organizations</h2>
 
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-64">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#748D92]" />
                 <input
                   type="text"
+                  placeholder="Search tenants..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search name, email, ORG-ID..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="pl-9 pr-3 py-1.5 rounded-xl sit-input text-xs"
                 />
               </div>
 
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="px-3 py-1.5 rounded-xl sit-input text-xs font-semibold"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="ACTIVE">ACTIVE</option>
@@ -276,134 +333,95 @@ export default function PlatformSuperAdminPage() {
             </div>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    <th className="p-4">Organization</th>
-                    <th className="p-4">Org ID / Code</th>
-                    <th className="p-4">Official Email</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4">Members</th>
-                    <th className="p-4">Created Date</th>
-                    <th className="p-4 text-right">Actions</th>
+          <div className="overflow-x-auto rounded-xl border border-[#748D92]">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#212A31] text-white font-bold uppercase tracking-wider">
+                <tr>
+                  <th className="px-4 py-3">Tenant ID</th>
+                  <th className="px-4 py-3">Organization Name</th>
+                  <th className="px-4 py-3">Official Email</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Members</th>
+                  <th className="px-4 py-3 text-right">Governance</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#748D92]/30 font-medium">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-[#2E3944] font-semibold">
+                      Loading organizations...
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={7} className="p-8 text-center text-slate-500">
-                        Loading organizations...
+                ) : filteredOrgs.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-[#2E3944] font-semibold">
+                      No matching organizations found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredOrgs.map((org) => (
+                    <tr key={org.id} className="hover:bg-[#D3D9D4]/40 transition-colors">
+                      <td className="px-4 py-3 font-mono font-bold text-[#124E66]">
+                        {org.orgId || org.uniqueCode || org.id.slice(0, 8)}
                       </td>
-                    </tr>
-                  ) : filteredOrgs.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="p-8 text-center text-slate-500">
-                        No organizations found matching criteria.
+                      <td className="px-4 py-3 font-bold text-[#212A31]">{org.name}</td>
+                      <td className="px-4 py-3 text-[#2E3944] font-mono">{org.officialEmail}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                            org.status === 'ACTIVE'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : org.status === 'PENDING'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {org.status}
+                        </span>
                       </td>
-                    </tr>
-                  ) : (
-                    filteredOrgs.map((org) => (
-                      <tr key={org.id} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="p-4 font-semibold text-white">{org.name}</td>
-                        <td className="p-4 font-mono">
-                          {org.orgId ? (
-                            <div className="space-y-1">
-                              <span className="block text-indigo-400 font-bold">{org.orgId}</span>
-                              <span className="block text-[10px] text-slate-500">
-                                Code: {org.uniqueCode}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-500 italic">Not generated</span>
-                          )}
-                        </td>
-                        <td className="p-4">{org.officialEmail}</td>
-                        <td className="p-4">
-                          <StatusBadge status={org.status} />
-                        </td>
-                        <td className="p-4">
-                          <span className="font-semibold text-white">{org.memberCount}</span> members (
-                          {org.adminCount} admins)
-                        </td>
-                        <td className="p-4 text-slate-400">
-                          {new Date(org.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="p-4 text-right space-x-2">
-                          {org.status === 'PENDING' ? (
-                            <button
-                              onClick={() => handleApprove(org.id)}
-                              disabled={actionLoading === org.id}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all text-xs font-medium"
-                            >
-                              Approve
-                            </button>
-                          ) : org.status === 'ACTIVE' ? (
-                            <button
-                              onClick={() => handleStatusChange(org.id, 'SUSPENDED')}
-                              disabled={actionLoading === org.id}
-                              className="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-medium"
-                            >
-                              Suspend
-                            </button>
-                          ) : org.status === 'SUSPENDED' ? (
-                            <button
-                              onClick={() => handleStatusChange(org.id, 'ACTIVE')}
-                              disabled={actionLoading === org.id}
-                              className="px-3 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all text-xs font-medium"
-                            >
-                              Activate
-                            </button>
-                          ) : null}
-
+                      <td className="px-4 py-3 text-[#212A31] font-bold">
+                        {org.memberCount} Members ({org.adminCount} Admins)
+                      </td>
+                      <td className="px-4 py-3 text-right space-x-1.5">
+                        {org.status === 'PENDING' && (
                           <button
-                            onClick={() => handleDelete(org.id, org.name)}
-                            disabled={actionLoading === org.id}
-                            className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white transition-all"
-                            title="Delete Organization"
+                            onClick={() => handleApprove(org.id)}
+                            className="px-2.5 py-1 rounded bg-[#124E66] text-white text-[11px] font-bold"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            Approve
                           </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        )}
+                        {org.status === 'ACTIVE' && (
+                          <button
+                            onClick={() => handleStatusChange(org.id, 'SUSPENDED')}
+                            className="px-2.5 py-1 rounded bg-[#2E3944] text-white text-[11px] font-bold"
+                          >
+                            Suspend
+                          </button>
+                        )}
+                        {org.status === 'SUSPENDED' && (
+                          <button
+                            onClick={() => handleStatusChange(org.id, 'ACTIVE')}
+                            className="px-2.5 py-1 rounded bg-[#124E66] text-white text-[11px] font-bold"
+                          >
+                            Activate
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(org.id, org.name)}
+                          className="px-2.5 py-1 rounded bg-red-700 text-white text-[11px] font-bold hover:bg-red-800"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        </section>
+        </div>
       </main>
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  if (status === 'ACTIVE') {
-    return (
-      <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold tracking-wider">
-        ACTIVE
-      </span>
-    );
-  }
-  if (status === 'PENDING') {
-    return (
-      <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold tracking-wider">
-        PENDING
-      </span>
-    );
-  }
-  if (status === 'SUSPENDED') {
-    return (
-      <span className="px-2.5 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[10px] font-bold tracking-wider">
-        SUSPENDED
-      </span>
-    );
-  }
-  return (
-    <span className="px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] font-bold tracking-wider">
-      REJECTED
-    </span>
   );
 }

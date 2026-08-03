@@ -35,6 +35,22 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if a pending join request already exists for this user and organization
+    const existingPending = await prisma.joinRequest.findFirst({
+      where: {
+        organizationId: organization.id,
+        userId: session.id,
+        status: 'PENDING',
+      },
+    });
+
+    if (existingPending) {
+      return NextResponse.json(
+        { error: `Joining Request Already sent to ${organization.name}` },
+        { status: 400 }
+      );
+    }
+
     // Verify designation belongs to this organization
     const designation = await prisma.designation.findFirst({
       where: {
@@ -72,7 +88,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      message: 'Join request submitted successfully. Awaiting organization admin approval.',
+      message: `Join request submitted successfully to ${organization.name}. Awaiting organization admin approval.`,
       joinRequest,
     });
   } catch (error) {

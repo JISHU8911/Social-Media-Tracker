@@ -2,6 +2,17 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession, isOrgAdmin, isOrgMember, isPlatformSuperAdmin } from '@/lib/auth';
 
+function parseLocalDate(dateStr: string | Date): Date {
+  if (dateStr instanceof Date) return dateStr;
+  if (!dateStr) return new Date();
+  const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [_, y, m, d] = match;
+    return new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0);
+  }
+  return new Date(dateStr);
+}
+
 export async function GET(request: Request) {
   try {
     const session = await getServerSession();
@@ -18,7 +29,6 @@ export async function GET(request: Request) {
       if (!session.organizationId) {
         return NextResponse.json([]);
       }
-      // Strict organization isolation
       where.organizationId = session.organizationId;
     } else {
       const { searchParams } = new URL(request.url);
@@ -47,7 +57,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only Organization Super Admins and Organization Admins can create calendar entries
     if (!isOrgAdmin(session) || !session.organizationId) {
       return NextResponse.json(
         { error: 'Forbidden: Only Organization Admins can create calendar entries' },
@@ -62,6 +71,7 @@ export async function POST(request: Request) {
       status,
       creativeUrl,
       creativeType,
+      caption,
       actualPostedDate,
       actualPostedTime,
       cancellationReason,
@@ -89,15 +99,16 @@ export async function POST(request: Request) {
       data: {
         organizationId: session.organizationId,
         title: title.trim(),
-        date: new Date(date),
+        date: parseLocalDate(date),
         targetTime: targetTime.trim(),
         status: entryStatus,
         creativeUrl: creativeUrl || null,
         creativeType: creativeType || null,
-        actualPostedDate: actualPostedDate ? new Date(actualPostedDate) : null,
+        caption: caption || null,
+        actualPostedDate: actualPostedDate ? parseLocalDate(actualPostedDate) : null,
         actualPostedTime: actualPostedTime || null,
         cancellationReason: cancellationReason || null,
-        newDate: newDate ? new Date(newDate) : null,
+        newDate: newDate ? parseLocalDate(newDate) : null,
         newTargetTime: newTargetTime || null,
         delayReason: delayReason || null,
         createdBy: session.name,

@@ -11,18 +11,24 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const joinRequests = await prisma.joinRequest.findMany({
-      where: {
-        organizationId: session.organizationId,
-      },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-        designation: { select: { id: true, designationName: true } },
-      },
-    });
+    const [joinRequests, organization] = await Promise.all([
+      prisma.joinRequest.findMany({
+        where: {
+          organizationId: session.organizationId,
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          designation: { select: { id: true, designationName: true } },
+        },
+      }),
+      prisma.organization.findUnique({
+        where: { id: session.organizationId },
+        select: { id: true, name: true, orgId: true, uniqueCode: true, officialEmail: true },
+      }),
+    ]);
 
-    return NextResponse.json({ joinRequests });
+    return NextResponse.json({ requests: joinRequests, joinRequests, organization });
   } catch (error) {
     console.error('List join requests error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyPassword, hashPassword, createSessionToken, UserRole } from '@/lib/auth';
+import { verifyPassword, createSessionToken, UserRole } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
     const cleanEmail = email.toLowerCase().trim();
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email: cleanEmail },
       include: {
         organization: true,
@@ -26,6 +26,37 @@ export async function POST(request: Request) {
       },
     });
 
+    // Backward compatibility: If no User record exists, check if an Organization was registered with this email
+    if (!user) {
+      const registeredOrg = await prisma.organization.findUnique({
+        where: { officialEmail: cleanEmail },
+      });
+
+      if (registeredOrg && registeredOrg.passwordHash) {
+        const isValidOrgPass = await verifyPassword(password, registeredOrg.passwordHash);
+        if (isValidOrgPass) {
+          // Create User account for the registered organization
+          user = await prisma.user.create({
+            data: {
+              name: `${registeredOrg.name} Admin`,
+              email: cleanEmail,
+              passwordHash: registeredOrg.passwordHash,
+              role: 'ORGANIZATION_SUPER_ADMIN',
+              organizationId: registeredOrg.id,
+              active: true,
+            },
+            include: {
+              organization: true,
+              memberships: {
+                where: { status: 'ACTIVE' },
+                include: { organization: true },
+              },
+            },
+          });
+        }
+      }
+    }
+
     if (!user || !user.active) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
@@ -33,26 +64,8 @@ export async function POST(request: Request) {
       );
     }
 
-    let isValidPassword = await verifyPassword(password, user.passwordHash);
-
-    // Fallback sync for Super Admin if SUPER_ADMIN_PASSWORD env variable is set on Vercel/server
-    const isSuperAdminEmail =
-      cleanEmail === (process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim() || 'admin@sit.com');
-
-    if (
-      !isValidPassword &&
-      (isSuperAdminEmail || user.role === 'PLATFORM_SUPER_ADMIN' || user.role === 'SUPER_ADMIN')
-    ) {
-      const envSuperAdminPass = process.env.SUPER_ADMIN_PASSWORD?.trim();
-      if (envSuperAdminPass && password === envSuperAdminPass) {
-        isValidPassword = true;
-        const newHash = await hashPassword(password);
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { passwordHash: newHash, role: 'PLATFORM_SUPER_ADMIN' },
-        });
-      }
-    }
+    // SECURITY COMPLIANCE: Authenticate STRICTLY against user.passwordHash using bcrypt.compare
+    const isValidPassword = await verifyPassword(password, user.passwordHash);
 
     if (!isValidPassword) {
       return NextResponse.json(
@@ -75,8 +88,27 @@ export async function POST(request: Request) {
     }
 
     // Section 5 Rules:
+    // If Organization status is PENDING and user is not Platform Super Admin
+    if (
+      effectiveOrgStatus === 'PENDING' &&
+      user.role !== 'PLATFORM_SUPER_ADMIN' &&
+      user.role !== 'SUPER_ADMIN'
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Your organization registration is currently PENDING approval from the Platform Super Admin. Access will be unlocked as soon as your registration is approved.',
+        },
+        { status: 403 }
+      );
+    }
+
     // REJECTED org access denied
-    if (effectiveOrgStatus === 'REJECTED' && user.role !== 'PLATFORM_SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
+    if (
+      effectiveOrgStatus === 'REJECTED' &&
+      user.role !== 'PLATFORM_SUPER_ADMIN' &&
+      user.role !== 'SUPER_ADMIN'
+    ) {
       return NextResponse.json(
         { error: 'Access denied: Organization registration was rejected.' },
         { status: 403 }

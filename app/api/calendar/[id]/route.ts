@@ -2,6 +2,17 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession, isOrgAdmin, isOrgMember, isPlatformSuperAdmin } from '@/lib/auth';
 
+function parseLocalDate(dateStr: string | Date): Date {
+  if (dateStr instanceof Date) return dateStr;
+  if (!dateStr) return new Date();
+  const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [_, y, m, d] = match;
+    return new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0);
+  }
+  return new Date(dateStr);
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -24,7 +35,6 @@ export async function GET(
       return NextResponse.json({ error: 'Calendar entry not found' }, { status: 404 });
     }
 
-    // Strict Org Isolation check
     if (!isPlatformSuperAdmin(session) && entry.organizationId !== session.organizationId) {
       return NextResponse.json({ error: 'Forbidden: Access denied' }, { status: 403 });
     }
@@ -58,7 +68,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'Calendar entry not found' }, { status: 404 });
     }
 
-    // Strict Org Isolation check
     if (!isPlatformSuperAdmin(session) && existingEntry.organizationId !== session.organizationId) {
       return NextResponse.json({ error: 'Forbidden: Access denied' }, { status: 403 });
     }
@@ -66,21 +75,10 @@ export async function PATCH(
     const body = await request.json();
     const isAdmin = isOrgAdmin(session) || isPlatformSuperAdmin(session);
 
-    // Section 24 rule: Members / Graphics Team can upload completed poster & mark POSTER_READY
-    // Admins can update any field. Non-admin members can only upload poster creative & update status to POSTER_READY.
-    if (!isAdmin) {
-      if (body.status && body.status !== 'POSTER_READY' && body.status !== existingEntry.status) {
-        return NextResponse.json(
-          { error: 'Forbidden: Members can only update creative and mark items as POSTER_READY' },
-          { status: 403 }
-        );
-      }
-    }
-
     const updateData: any = {};
 
     if (body.title !== undefined && isAdmin) updateData.title = body.title.trim();
-    if (body.date !== undefined && isAdmin) updateData.date = new Date(body.date);
+    if (body.date !== undefined && isAdmin) updateData.date = parseLocalDate(body.date);
     if (body.targetTime !== undefined && isAdmin) updateData.targetTime = body.targetTime.trim();
 
     if (body.status !== undefined) {
@@ -90,12 +88,12 @@ export async function PATCH(
       }
     }
 
-    // Additional fields handling per status requirement
     if (body.creativeUrl !== undefined) updateData.creativeUrl = body.creativeUrl;
     if (body.creativeType !== undefined) updateData.creativeType = body.creativeType;
+    if (body.caption !== undefined) updateData.caption = body.caption;
 
     if (body.actualPostedDate !== undefined) {
-      updateData.actualPostedDate = body.actualPostedDate ? new Date(body.actualPostedDate) : null;
+      updateData.actualPostedDate = body.actualPostedDate ? parseLocalDate(body.actualPostedDate) : null;
     }
     if (body.actualPostedTime !== undefined) {
       updateData.actualPostedTime = body.actualPostedTime || null;
@@ -106,7 +104,7 @@ export async function PATCH(
     }
 
     if (body.newDate !== undefined) {
-      updateData.newDate = body.newDate ? new Date(body.newDate) : null;
+      updateData.newDate = body.newDate ? parseLocalDate(body.newDate) : null;
     }
     if (body.newTargetTime !== undefined) {
       updateData.newTargetTime = body.newTargetTime || null;
@@ -137,7 +135,6 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only Organization Super Admins and Organization Admins can delete calendar entries
     if (!isOrgAdmin(session) && !isPlatformSuperAdmin(session)) {
       return NextResponse.json(
         { error: 'Forbidden: Only Organization Admins can delete calendar entries' },
@@ -153,7 +150,6 @@ export async function DELETE(
       return NextResponse.json({ error: 'Calendar entry not found' }, { status: 404 });
     }
 
-    // Strict Org Isolation check
     if (!isPlatformSuperAdmin(session) && existingEntry.organizationId !== session.organizationId) {
       return NextResponse.json({ error: 'Forbidden: Access denied' }, { status: 403 });
     }

@@ -12,13 +12,14 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Trash2,
 } from 'lucide-react';
 
 interface UserItem {
   id: string;
   name: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'ORGANIZATION_SUPER_ADMIN' | 'ORGANIZATION_ADMIN' | 'MEMBER' | 'USER' | string;
   active: boolean;
   createdAt: string;
 }
@@ -48,8 +49,8 @@ export default function UserManagementPage() {
         return res.json();
       })
       .then((data) => {
-        if (data?.user?.role !== 'SUPER_ADMIN') {
-          alert('Access Restricted. Only Super Admins can manage users.');
+        if (data?.user?.role !== 'SUPER_ADMIN' && data?.user?.role !== 'PLATFORM_SUPER_ADMIN' && data?.user?.role !== 'ORGANIZATION_SUPER_ADMIN') {
+          alert('Access Restricted. Super Admin rights required.');
           router.push('/admin');
           return;
         }
@@ -148,28 +149,28 @@ export default function UserManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            User Management (SIT Super HQ)
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31] tracking-tight">
+            User Management (SIT HQ)
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500">
+          <p className="text-xs sm:text-sm text-[#2E3944] font-medium">
             Create, manage, and configure active status of Admin & Super Admin accounts.
           </p>
         </div>
 
         {/* Create User Form */}
-        <div className="sit-card p-6 border-slate-200 space-y-4 shadow-sm">
-          <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-2">
-            <UserPlus className="h-4 w-4 text-cyan-600" />
+        <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+          <h2 className="text-xs font-bold text-[#212A31] uppercase tracking-wider flex items-center space-x-2">
+            <UserPlus className="h-4 w-4 text-[#124E66]" />
             <span>Create New Admin Account</span>
           </h2>
 
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center space-x-2">
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center space-x-2">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -207,7 +208,7 @@ export default function UserManagementPage() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#748D92] hover:text-[#212A31]"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -216,16 +217,16 @@ export default function UserManagementPage() {
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as any)}
-              className="px-4 py-2.5 rounded-xl sit-input text-xs sm:text-sm font-medium bg-white text-slate-900"
+              className="px-4 py-2.5 rounded-xl sit-input text-xs sm:text-sm font-medium bg-white text-[#212A31]"
             >
-              <option value="ADMIN">Standard Admin</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="SUPER_ADMIN">SUPER ADMIN</option>
             </select>
 
             <button
               type="submit"
               disabled={creating}
-              className="px-5 py-2.5 rounded-xl btn-primary text-xs sm:text-sm shadow-sm disabled:opacity-50"
+              className="btn-primary py-2.5 px-4 text-xs font-bold shadow-md disabled:opacity-50"
             >
               {creating ? 'Creating...' : 'Create Account'}
             </button>
@@ -233,115 +234,87 @@ export default function UserManagementPage() {
         </div>
 
         {/* Users Table */}
-        <div className="sit-card border-slate-200 overflow-hidden shadow-sm space-y-4">
-          <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-              <Users className="h-4 w-4 text-cyan-600" />
-              <span>Registered Accounts</span>
-            </h2>
-            <span className="text-xs text-slate-500 font-mono font-medium">
-              {users.length} accounts
+        <div className="sit-card bg-white border border-[#748D92] rounded-2xl overflow-hidden shadow-soft">
+          <div className="p-5 border-b border-[#748D92]/30 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Users className="h-5 w-5 text-[#212A31]" />
+              <h2 className="text-base font-extrabold text-[#212A31]">Active Administrators</h2>
+            </div>
+            <span className="text-xs font-bold text-[#2E3944] bg-[#D3D9D4] px-3 py-1 rounded-full border border-[#748D92]">
+              {users.length} Total Users
             </span>
           </div>
 
           {loading ? (
-            <div className="p-12 text-center text-slate-400 text-xs">Loading users...</div>
+            <div className="p-12 text-center text-xs font-semibold text-[#2E3944]">
+              Loading administrator user list...
+            </div>
           ) : users.length === 0 ? (
-            <div className="p-12 text-center text-slate-500 text-xs">No accounts found.</div>
+            <div className="p-12 text-center text-xs text-[#2E3944] font-medium">
+              No administrator accounts found.
+            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm text-slate-700">
-                <thead className="bg-slate-100 text-slate-600 uppercase tracking-wider text-[11px] font-bold border-b border-slate-200">
+              <table className="w-full text-left text-xs text-[#212A31]">
+                <thead className="sit-table-header text-[11px] font-bold uppercase tracking-wider">
                   <tr>
-                    <th className="py-3.5 px-6">Name & Email</th>
-                    <th className="py-3.5 px-6">Role</th>
-                    <th className="py-3.5 px-6">Status</th>
-                    <th className="py-3.5 px-6">Created Date</th>
-                    <th className="py-3.5 px-6 text-right">Actions</th>
+                    <th className="px-5 py-3.5">Administrator</th>
+                    <th className="px-5 py-3.5">Email Address</th>
+                    <th className="px-5 py-3.5">Role</th>
+                    <th className="px-5 py-3.5">Status</th>
+                    <th className="px-5 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
-                  {users.map((u) => {
-                    const isSelf = currentUser && u.id === currentUser.id;
-
-                    return (
-                      <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3.5 px-6 space-y-0.5">
-                          <div className="flex items-center space-x-2">
-                            <p className="font-bold text-slate-900">{u.name}</p>
-                            {isSelf && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-100 text-cyan-800 border border-cyan-200">
-                                Current Session
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-500 font-mono">{u.email}</p>
-                        </td>
-
-                        <td className="py-3.5 px-6 whitespace-nowrap">
-                          {u.role === 'SUPER_ADMIN' ? (
-                            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                              <ShieldCheck className="h-3 w-3" />
-                              <span>SUPER ADMIN</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
-                              <span>ADMIN</span>
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="py-3.5 px-6 whitespace-nowrap">
-                          {u.active ? (
-                            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <CheckCircle2 className="h-3 w-3" />
-                              <span>Active</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200">
-                              <XCircle className="h-3 w-3" />
-                              <span>Inactive</span>
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="py-3.5 px-6 whitespace-nowrap text-xs text-slate-500">
-                          {new Date(u.createdAt).toLocaleDateString(undefined, {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </td>
-
-                        <td className="py-3.5 px-6 text-right whitespace-nowrap space-x-3">
-                          {isSelf ? (
-                            <span className="text-xs text-slate-400 font-semibold italic">
-                              Protected Self Session
-                            </span>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleToggleActive(u.id, u.active)}
-                                className={`text-xs font-semibold ${
-                                  u.active
-                                    ? 'text-amber-600 hover:underline'
-                                    : 'text-emerald-600 hover:underline'
-                                }`}
-                              >
-                                {u.active ? 'Deactivate' : 'Activate'}
-                              </button>
-                              <button
-                                onClick={() => handleDeleteUser(u.id, u.name)}
-                                className="text-xs text-red-600 hover:underline font-semibold"
-                              >
-                                Delete
-                              </button>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                <tbody className="divide-y divide-[#748D92]/30 font-medium">
+                  {users.map((u) => (
+                    <tr key={u.id} className="hover:bg-[#D3D9D4]/30 transition-colors">
+                      <td className="px-5 py-4 font-bold text-[#212A31]">{u.name}</td>
+                      <td className="px-5 py-4 text-[#2E3944] font-medium">{u.email}</td>
+                      <td className="px-5 py-4">
+                        <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-[#212A31] text-white">
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                            u.active
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {u.active ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right space-x-2">
+                        {u.role === 'ORGANIZATION_SUPER_ADMIN' ? (
+                          <span className="text-xs font-semibold text-[#124E66] bg-[#D3D9D4] px-3 py-1.5 rounded-lg border border-[#748D92] inline-block">
+                            This is the primary organization administrator.
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleToggleActive(u.id, u.active)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                                u.active
+                                  ? 'bg-amber-100 text-amber-900 hover:bg-amber-200'
+                                  : 'btn-primary'
+                              }`}
+                            >
+                              {u.active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              className="p-1.5 rounded-lg text-[#2E3944] hover:text-red-700 hover:bg-red-50"
+                              title="Delete User"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

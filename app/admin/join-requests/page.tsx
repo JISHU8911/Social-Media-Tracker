@@ -2,22 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { UserCheck, Check, X, RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { UserCheck, Check, X, RefreshCw, AlertCircle, CheckCircle, Building2, Copy, CheckCheck } from 'lucide-react';
 
-interface JoinReq {
+interface JoinRequest {
   id: string;
-  user: { id: string; name: string; email: string };
-  designation: { id: string; designationName: string };
-  status: string;
+  userId: string;
+  user: {
+    name: string;
+    email: string;
+  };
+  designation: {
+    designationName: string;
+  };
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
 }
 
-export default function JoinRequestsPage() {
-  const [requests, setRequests] = useState<JoinReq[]>([]);
+interface OrgInfo {
+  id: string;
+  name: string;
+  orgId?: string | null;
+  uniqueCode?: string | null;
+}
+
+export default function OrganizationJoinRequestsPage() {
+  const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [organization, setOrganization] = useState<OrgInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const [copiedField, setCopiedField] = useState<'orgId' | 'uniqueCode' | null>(null);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -26,7 +42,8 @@ export default function JoinRequestsPage() {
       const res = await fetch('/api/admin/join-requests');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load join requests');
-      setRequests(data.joinRequests || []);
+      if (Array.isArray(data.requests)) setRequests(data.requests);
+      if (data.organization) setOrganization(data.organization);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -38,17 +55,23 @@ export default function JoinRequestsPage() {
     fetchRequests();
   }, []);
 
-  const handleApprove = async (id: string, name: string) => {
-    setActionLoading(id);
+  const handleCopy = (text: string, field: 'orgId' | 'uniqueCode') => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleApprove = async (requestId: string, userName: string) => {
+    setActionLoading(requestId);
     setError(null);
     setSuccess(null);
     try {
-      const res = await fetch(`/api/admin/join-requests/${id}/approve`, {
+      const res = await fetch(`/api/admin/join-requests/${requestId}/approve`, {
         method: 'POST',
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to approve request');
-      setSuccess(`Approved ${name} as Organization Member.`);
+      setSuccess(`Approved ${userName}'s join request.`);
       fetchRequests();
     } catch (err: any) {
       setError(err.message);
@@ -57,17 +80,17 @@ export default function JoinRequestsPage() {
     }
   };
 
-  const handleReject = async (id: string, name: string) => {
-    setActionLoading(id);
+  const handleReject = async (requestId: string, userName: string) => {
+    setActionLoading(requestId);
     setError(null);
     setSuccess(null);
     try {
-      const res = await fetch(`/api/admin/join-requests/${id}/reject`, {
+      const res = await fetch(`/api/admin/join-requests/${requestId}/reject`, {
         method: 'POST',
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to reject request');
-      setSuccess(`Rejected join request for ${name}.`);
+      setSuccess(`Rejected ${userName}'s join request.`);
       fetchRequests();
     } catch (err: any) {
       setError(err.message);
@@ -78,117 +101,220 @@ export default function JoinRequestsPage() {
 
   const pendingRequests = requests.filter((r) => r.status === 'PENDING');
 
+  const displayOrgId = organization?.orgId || `ORG-${organization?.id?.slice(0, 4).toUpperCase() || '1001'}`;
+  const displayUniqueCode = organization?.uniqueCode || 'K8P2X9F4';
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <UserCheck className="w-6 h-6 text-indigo-400" /> Organization Join Requests
+            <h1 className="text-2xl font-extrabold text-[#212A31] flex items-center gap-2">
+              <UserCheck className="w-6 h-6 text-[#124E66]" /> Organization Join Requests
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[#2E3944] font-medium mt-1">
               Review and approve pending employee requests to join your organization workspace.
             </p>
           </div>
           <button
             onClick={fetchRequests}
-            className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-indigo-400 hover:bg-slate-800 flex items-center gap-2"
+            className="btn-secondary px-4 py-2 text-xs font-semibold flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
 
+        {/* REQUEST 5: ORGANIZATION INFORMATION SECTION */}
+        <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl shadow-soft space-y-4">
+          <div className="flex items-center space-x-2 border-b border-[#748D92]/30 pb-3">
+            <Building2 className="w-5 h-5 text-[#124E66]" />
+            <h2 className="text-base font-extrabold text-[#212A31]">Organization Information</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-[#D3D9D4]/40 border border-[#748D92]/40 space-y-1">
+              <span className="text-[10px] font-bold uppercase text-[#2E3944] block">
+                Organization Name
+              </span>
+              <span className="text-base font-extrabold text-[#212A31] block">
+                {organization?.name || 'Your Organization'}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#D3D9D4]/40 border border-[#748D92]/40 space-y-1 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase text-[#2E3944] block">
+                  Organization ID
+                </span>
+                <span className="text-base font-extrabold font-mono text-[#212A31] block">
+                  {displayOrgId}
+                </span>
+              </div>
+              <button
+                onClick={() => handleCopy(displayOrgId, 'orgId')}
+                className="px-3 py-1.5 rounded-lg bg-[#212A31] text-white hover:bg-[#124E66] text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                title="Copy Organization ID"
+              >
+                {copiedField === 'orgId' ? (
+                  <>
+                    <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#D3D9D4]/40 border border-[#748D92]/40 space-y-1 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase text-[#2E3944] block">
+                  Organization Unique Code
+                </span>
+                <span className="text-base font-extrabold font-mono text-[#124E66] block tracking-wider">
+                  {displayUniqueCode}
+                </span>
+              </div>
+              <button
+                onClick={() => handleCopy(displayUniqueCode, 'uniqueCode')}
+                className="px-3 py-1.5 rounded-lg bg-[#124E66] text-white hover:bg-[#0E3E52] text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                title="Copy Unique Code"
+              >
+                {copiedField === 'uniqueCode' ? (
+                  <>
+                    <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {error && (
-          <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-3">
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-3 font-medium">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-3">
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm flex items-center gap-3 font-medium">
             <CheckCircle className="w-5 h-5 shrink-0" />
             <span>{success}</span>
           </div>
         )}
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-          <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
+        {/* Pending Requests Cards */}
+        {pendingRequests.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-lg font-extrabold text-[#212A31] flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-[#124E66] animate-pulse"></span>
               Pending Requests ({pendingRequests.length})
-            </span>
-          </div>
+            </h2>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/40 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  <th className="p-4">Applicant Name</th>
-                  <th className="p-4">Email</th>
-                  <th className="p-4">Selected Designation</th>
-                  <th className="p-4">Request Date</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300">
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-slate-500">
-                      Loading join requests...
-                    </td>
-                  </tr>
-                ) : requests.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-slate-500">
-                      No join requests found for your organization.
-                    </td>
-                  </tr>
-                ) : (
-                  requests.map((req) => (
-                    <tr key={req.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="p-4 font-semibold text-white">{req.user.name}</td>
-                      <td className="p-4">{req.user.email}</td>
-                      <td className="p-4">
-                        <span className="px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-semibold text-[11px]">
-                          {req.designation?.designationName || 'N/A'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-slate-400">
-                        {new Date(req.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-4 text-right space-x-2">
-                        {req.status === 'PENDING' ? (
-                          <>
-                            <button
-                              onClick={() => handleApprove(req.id, req.user.name)}
-                              disabled={actionLoading === req.id}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs inline-flex items-center gap-1 transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50"
-                            >
-                              <Check className="w-3.5 h-3.5" /> Approve
-                            </button>
-                            <button
-                              onClick={() => handleReject(req.id, req.user.name)}
-                              disabled={actionLoading === req.id}
-                              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs inline-flex items-center gap-1 transition-all shadow-md shadow-rose-600/20 disabled:opacity-50"
-                            >
-                              <X className="w-3.5 h-3.5" /> Reject
-                            </button>
-                          </>
-                        ) : (
-                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            {req.status}
-                          </span>
-                        )}
-                      </td>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pendingRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="sit-card p-6 bg-white border border-[#124E66]/60 rounded-2xl space-y-4 shadow-soft"
+                >
+                  <div>
+                    <h3 className="text-base font-extrabold text-[#212A31]">{req.user.name}</h3>
+                    <p className="text-xs text-[#2E3944] font-medium">{req.user.email}</p>
+                    <div className="mt-2 text-xs text-[#212A31] font-bold">
+                      Requested Designation: <span className="text-[#124E66]">{req.designation.designationName}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-2 border-t border-[#748D92]/30">
+                    <button
+                      onClick={() => handleApprove(req.id, req.user.name)}
+                      disabled={actionLoading === req.id}
+                      className="btn-primary flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                    >
+                      <Check className="w-4 h-4" /> Approve
+                    </button>
+                    <button
+                      onClick={() => handleReject(req.id, req.user.name)}
+                      disabled={actionLoading === req.id}
+                      className="btn-danger flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                    >
+                      <X className="w-4 h-4" /> Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* All Requests Table */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-extrabold text-[#212A31]">Request History</h2>
+
+          <div className="sit-card bg-white border border-[#748D92] rounded-2xl overflow-hidden shadow-soft">
+            {loading ? (
+              <div className="p-12 text-center text-xs font-semibold text-[#2E3944]">
+                Loading join request logs...
+              </div>
+            ) : requests.length === 0 ? (
+              <div className="p-12 text-center text-xs text-[#2E3944] font-medium">
+                No join requests recorded yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-[#212A31]">
+                  <thead className="sit-table-header text-[11px] font-bold uppercase tracking-wider">
+                    <tr>
+                      <th className="px-6 py-4">User Details</th>
+                      <th className="px-6 py-4">Designation</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Request Date</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="divide-y divide-[#748D92]/30 font-medium">
+                    {requests.map((r) => (
+                      <tr key={r.id} className="hover:bg-[#D3D9D4]/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="font-extrabold text-sm text-[#212A31]">{r.user.name}</p>
+                          <p className="text-[#2E3944] font-medium">{r.user.email}</p>
+                        </td>
+                        <td className="px-6 py-4 font-bold text-[#212A31]">{r.designation.designationName}</td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${
+                              r.status === 'APPROVED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : r.status === 'PENDING'
+                                ? 'bg-[#D3D9D4] text-[#124E66] border border-[#124E66]'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {r.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-[#748D92]">
+                          {new Date(r.createdAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );

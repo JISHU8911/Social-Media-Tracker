@@ -13,11 +13,19 @@ export default function MemberCalendarPage() {
   useEffect(() => {
     fetch('/api/auth/me')
       .then((res) => {
-        if (!res.ok) router.push('/login');
+        if (!res.ok) {
+          router.push('/login');
+          return null;
+        }
         return res.json();
       })
       .then((data) => {
         if (data?.user) {
+          if (!data.user.organizationId && data.user.role !== 'PLATFORM_SUPER_ADMIN' && data.user.role !== 'SUPER_ADMIN') {
+            alert('Join an organization to access organization resources.');
+            router.push('/join-organization');
+            return;
+          }
           setUserRole(data.user.role);
         } else {
           router.push('/login');
@@ -29,14 +37,14 @@ export default function MemberCalendarPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
-        <div className="text-xs font-semibold text-slate-400">Loading Content Calendar...</div>
+      <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] flex items-center justify-center font-sans">
+        <div className="text-xs font-bold text-[#2E3944]">Loading Content Calendar...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <CalendarView userRole={userRole} canManage={false} />

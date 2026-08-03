@@ -145,6 +145,7 @@ model CalendarEntry {
   status             String       @default("PLANNED") // PLANNED | POSTER_READY | POSTED | CANCELLED | DELAYED
   creativeUrl        String?      // Image or Video URL for POSTER_READY
   creativeType       String?      // IMAGE | VIDEO
+  caption            String?      // Independent caption managed by Social Team
   actualPostedDate   DateTime?    // For POSTED
   actualPostedTime   String?      // For POSTED
   cancellationReason String?      // For CANCELLED
@@ -156,5 +157,16 @@ model CalendarEntry {
   updatedAt          DateTime     @updatedAt
 
   @@index([organizationId, date])
+}
+
+model VerificationCode {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  type      String   // MEMBER_SIGNUP | ORG_REGISTRATION
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
 }
 
