@@ -62,7 +62,7 @@ export default function CreateNewPostPage() {
         body: JSON.stringify({
           title: title.trim(),
           imageUrl: mediaUrl,
-          videoUrl: mediaUrl,
+          videoUrl: mediaType === 'VIDEO' ? mediaUrl : null,
           mediaType,
           caption: caption.trim() || undefined,
           facebookUrl: facebookUrl.trim() || undefined,

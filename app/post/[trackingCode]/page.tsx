@@ -279,7 +279,19 @@ export default function EmployeeTrackingPage({
           <div className="sit-card overflow-hidden shadow-md border-slate-200">
             {/* Post Media (Image or Video) */}
             <div className="relative w-full min-h-[240px] sm:min-h-[320px] max-h-[450px] bg-slate-900 flex items-center justify-center overflow-hidden border-b border-slate-200">
-              {post.mediaType === 'VIDEO' || post.videoUrl ? (
+              {post.mediaType === 'VIDEO' ? (
+                <video
+                  src={post.videoUrl || post.imageUrl}
+                  controls
+                  className="w-full max-h-[450px] object-contain"
+                />
+              ) : post.mediaType === 'IMAGE' ? (
+                <img
+                  src={post.imageUrl}
+                  alt={post.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : ['.mp4', '.webm', '.mov'].some(ext => (post.videoUrl || post.imageUrl || '').toLowerCase().includes(ext)) ? (
                 <video
                   src={post.videoUrl || post.imageUrl}
                   controls

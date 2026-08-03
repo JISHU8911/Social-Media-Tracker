@@ -12,18 +12,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const isVideo = file.type.startsWith('video/') || 
+    const fileExt = (path.extname(file.name) || '').toLowerCase();
+    const isVideo =
+      file.type.startsWith('video/') ||
       ['.mp4', '.mov', '.webm'].some((ext) => file.name.toLowerCase().endsWith(ext));
 
     const maxImageSize = 10 * 1024 * 1024; // 10MB
-    const maxVideoSize = 50 * 1024 * 1024; // 50MB
+    const maxVideoSize = 100 * 1024 * 1024; // 100MB
     const maxAllowedSize = isVideo ? maxVideoSize : maxImageSize;
 
     if (file.size > maxAllowedSize) {
       return NextResponse.json(
         {
           error: isVideo
-            ? 'Video size exceeds maximum limit of 50 MB'
+            ? 'Video size exceeds maximum limit of 100 MB'
             : 'Image size exceeds maximum limit of 10 MB',
         },
         { status: 400 }
@@ -33,7 +35,6 @@ export async function POST(request: Request) {
     const allowedImageMime = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     const allowedVideoMime = ['video/mp4', 'video/quicktime', 'video/webm', 'video/mov'];
 
-    const fileExt = (path.extname(file.name) || '').toLowerCase();
     const allowedImageExt = ['.jpg', '.jpeg', '.png', '.webp'];
     const allowedVideoExt = ['.mp4', '.mov', '.webm'];
 
@@ -72,18 +73,6 @@ export async function POST(request: Request) {
         });
       } catch (blobError: any) {
         console.error('Vercel Blob Upload Error:', blobError);
-        if (
-          blobError?.message?.includes('private store') ||
-          blobError?.message?.includes('public access')
-        ) {
-          return NextResponse.json(
-            {
-              error:
-                'Vercel Blob Configuration Error: Cannot use public access on a private store.',
-            },
-            { status: 400 }
-          );
-        }
       }
     }
 

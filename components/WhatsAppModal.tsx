@@ -31,7 +31,7 @@ export default function WhatsAppModal({ post, isOpen = true, onClose }: WhatsApp
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const trackingLink = `${baseUrl}/post/${post.trackingCode}`;
 
-  const isVideo = post.mediaType === 'VIDEO' || Boolean(post.videoUrl);
+  const isVideo = post.mediaType === 'VIDEO' || (post.mediaType !== 'IMAGE' && Boolean(post.videoUrl && ['.mp4', '.webm', '.mov'].some(ext => (post.videoUrl || '').toLowerCase().includes(ext))));
 
   let formattedMessage = `---------------------------------\n\n[Media Attached: ${isVideo ? 'Video' : 'Image'}]\n\n`;
 

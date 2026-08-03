@@ -30,7 +30,6 @@ export async function GET(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    // Verify Org access if user logged in
     if (
       session &&
       !isPlatformSuperAdmin(session) &&
@@ -88,13 +87,17 @@ export async function PUT(
       );
     }
 
+    const effectiveMediaType = mediaType === 'VIDEO' ? 'VIDEO' : mediaType === 'IMAGE' ? 'IMAGE' : post.mediaType;
+    const finalImageUrl = (effectiveMediaType === 'VIDEO' ? (videoUrl || imageUrl || post.imageUrl) : (imageUrl || post.imageUrl))?.trim();
+    const finalVideoUrl = effectiveMediaType === 'VIDEO' ? finalImageUrl : null;
+
     const updatedPost = await prisma.post.update({
       where: { id: params.id },
       data: {
         title: title?.trim(),
-        imageUrl: imageUrl?.trim(),
-        videoUrl: videoUrl !== undefined ? (videoUrl ? videoUrl.trim() : null) : undefined,
-        mediaType: mediaType !== undefined ? mediaType : undefined,
+        imageUrl: finalImageUrl,
+        videoUrl: finalVideoUrl,
+        mediaType: effectiveMediaType,
         caption: caption !== undefined ? caption.trim() || null : undefined,
         facebookUrl: facebookUrl !== undefined ? facebookUrl.trim() || null : undefined,
         instagramUrl: instagramUrl !== undefined ? instagramUrl.trim() || null : undefined,

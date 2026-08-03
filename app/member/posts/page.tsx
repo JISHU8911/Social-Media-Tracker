@@ -87,7 +87,7 @@ export default function PublishedPostsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post) => {
-              const isVideo = post.mediaType === 'VIDEO' || Boolean(post.videoUrl);
+              const isVideo = post.mediaType === 'VIDEO' || (post.mediaType !== 'IMAGE' && Boolean(post.videoUrl && ['.mp4', '.webm', '.mov'].some(ext => (post.videoUrl || '').toLowerCase().includes(ext))));
               return (
                 <div
                   key={post.id}

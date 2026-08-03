@@ -35,6 +35,8 @@ export default function MediaUploader({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const currentMediaType = mediaType || selectedMediaType;
+
   const handleFile = async (file: File) => {
     setError(null);
 
@@ -42,37 +44,50 @@ export default function MediaUploader({
       file.type.startsWith('video/') ||
       ['.mp4', '.mov', '.webm'].some((ext) => file.name.toLowerCase().endsWith(ext));
 
-    const fileCategory: 'IMAGE' | 'VIDEO' = isVid ? 'VIDEO' : 'IMAGE';
+    const isImg =
+      file.type.startsWith('image/') ||
+      ['.jpg', '.jpeg', '.png', '.webp'].some((ext) => file.name.toLowerCase().endsWith(ext));
 
-    const maxLimit = isVid ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    // Mode Validation
+    if (currentMediaType === 'IMAGE' && !isImg) {
+      setError('Invalid format for Image mode. Allowed formats: JPG, PNG, WEBP. Switch to Video mode for video files.');
+      return;
+    }
+
+    if (currentMediaType === 'VIDEO' && !isVid) {
+      setError('Invalid format for Video mode. Allowed formats: MP4, MOV, WEBM. Switch to Image mode for image files.');
+      return;
+    }
+
+    const maxLimit = currentMediaType === 'VIDEO' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxLimit) {
       setError(
-        isVid
-          ? 'Video size exceeds maximum limit of 50 MB.'
+        currentMediaType === 'VIDEO'
+          ? 'Video size exceeds maximum limit of 100 MB.'
           : 'Image size exceeds maximum limit of 10 MB.'
       );
       return;
     }
 
-    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     const allowedVideoTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/mov'];
     const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
 
     if (
-      fileCategory === 'IMAGE' &&
+      currentMediaType === 'IMAGE' &&
       !allowedImageTypes.includes(file.type) &&
       !['.jpg', '.jpeg', '.png', '.webp'].includes(ext)
     ) {
-      setError('Invalid format. Allowed images: JPG, PNG, WEBP.');
+      setError('Invalid image format. Allowed formats: JPG, PNG, WEBP.');
       return;
     }
 
     if (
-      fileCategory === 'VIDEO' &&
+      currentMediaType === 'VIDEO' &&
       !allowedVideoTypes.includes(file.type) &&
       !['.mp4', '.mov', '.webm'].includes(ext)
     ) {
-      setError('Invalid format. Allowed videos: MP4, MOV, WEBM.');
+      setError('Invalid video format. Allowed formats: MP4, MOV, WEBM.');
       return;
     }
 
@@ -100,7 +115,7 @@ export default function MediaUploader({
         throw new Error(data.error || 'Upload failed');
       }
 
-      const returnedMediaType: 'IMAGE' | 'VIDEO' = data.mediaType || fileCategory;
+      const returnedMediaType: 'IMAGE' | 'VIDEO' = currentMediaType;
       setSelectedMediaType(returnedMediaType);
       onChange(data.url, returnedMediaType);
     } catch (err: any) {
@@ -135,7 +150,14 @@ export default function MediaUploader({
     }
   };
 
-  const currentMediaType = mediaType || selectedMediaType;
+  const handleSwitchMediaType = (type: 'IMAGE' | 'VIDEO') => {
+    setSelectedMediaType(type);
+    if (value) {
+      onChange('', type); // clear value on mode switch
+    } else {
+      onChange('', type);
+    }
+  };
 
   return (
     <div className="space-y-4 font-sans">
@@ -144,7 +166,7 @@ export default function MediaUploader({
         <div className="flex items-center space-x-3 bg-[#D3D9D4] p-1.5 rounded-xl max-w-xs border border-[#748D92]">
           <button
             type="button"
-            onClick={() => setSelectedMediaType('IMAGE')}
+            onClick={() => handleSwitchMediaType('IMAGE')}
             className={`flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
               currentMediaType === 'IMAGE'
                 ? 'bg-[#124E66] text-white shadow-sm'
@@ -156,7 +178,7 @@ export default function MediaUploader({
           </button>
           <button
             type="button"
-            onClick={() => setSelectedMediaType('VIDEO')}
+            onClick={() => handleSwitchMediaType('VIDEO')}
             className={`flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
               currentMediaType === 'VIDEO'
                 ? 'bg-[#124E66] text-white shadow-sm'
@@ -256,7 +278,7 @@ export default function MediaUploader({
                 ) : (
                   <img
                     src={value}
-                    alt="Uploaded Media"
+                    alt="Uploaded Media Preview"
                     className="w-full h-full object-cover max-h-[360px]"
                   />
                 )}
@@ -318,7 +340,7 @@ export default function MediaUploader({
                   </p>
                   <p className="text-[11px] text-[#2E3944]">
                     {currentMediaType === 'VIDEO'
-                      ? 'Supported formats: MP4, MOV, WEBM (Max 50 MB)'
+                      ? 'Supported formats: MP4, MOV, WEBM (Max 100 MB)'
                       : 'Supported formats: JPG, PNG, WEBP (Max 10 MB)'}
                   </p>
                 </div>

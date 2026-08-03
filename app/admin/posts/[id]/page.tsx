@@ -276,7 +276,15 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
         {/* Post Card & Social Media Links */}
         <div className="sit-card p-6 border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-6 shadow-sm">
           <div className="h-56 rounded-xl bg-slate-900 overflow-hidden border border-slate-200 flex items-center justify-center">
-            {post.mediaType === 'VIDEO' || post.videoUrl ? (
+            {post.mediaType === 'VIDEO' ? (
+              <video
+                src={post.videoUrl || post.imageUrl}
+                controls
+                className="w-full h-full object-contain"
+              />
+            ) : post.mediaType === 'IMAGE' ? (
+              <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
+            ) : ['.mp4', '.webm', '.mov'].some(ext => (post.videoUrl || post.imageUrl || '').toLowerCase().includes(ext)) ? (
               <video
                 src={post.videoUrl || post.imageUrl}
                 controls

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession, isOrgAdmin, isPlatformSuperAdmin } from '@/lib/auth';
+import { getServerSession, isOrgAdmin } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 function generateTrackingCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -11,34 +13,22 @@ function generateTrackingCode(): string {
   return code;
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getServerSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let where: any = {};
-    if (!isPlatformSuperAdmin(session)) {
-      if (!session.organizationId) {
-        return NextResponse.json([]);
-      }
-      where.organizationId = session.organizationId;
-    } else {
-      const { searchParams } = new URL(request.url);
-      const orgId = searchParams.get('organizationId');
-      if (orgId) {
-        where.organizationId = orgId;
-      }
-    }
+    const whereCondition = session.organizationId
+      ? { organizationId: session.organizationId }
+      : {};
 
     const posts = await prisma.post.findMany({
-      where,
+      where: whereCondition,
       orderBy: { createdAt: 'desc' },
       include: {
-        organization: {
-          select: { name: true, orgId: true },
-        },
+        organization: { select: { name: true, orgId: true } },
         _count: {
           select: { submissions: true },
         },
@@ -55,11 +45,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession();
-    if (!isOrgAdmin(session) || !session?.organizationId) {
-      return NextResponse.json(
-        { error: 'Unauthorized: Only Organization Admins can create posts' },
-        { status: 403 }
-      );
+    if (!session || !isOrgAdmin(session)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const {
@@ -79,9 +66,9 @@ export async function POST(request: Request) {
     }
 
     const effectiveMediaType = mediaType === 'VIDEO' ? 'VIDEO' : 'IMAGE';
-    const primaryMediaUrl = effectiveMediaType === 'VIDEO' ? (videoUrl || imageUrl) : imageUrl;
+    const primaryMediaUrl = (effectiveMediaType === 'VIDEO' ? (videoUrl || imageUrl) : imageUrl)?.trim();
 
-    if (!primaryMediaUrl || !primaryMediaUrl.trim()) {
+    if (!primaryMediaUrl) {
       return NextResponse.json(
         { error: `Post ${effectiveMediaType.toLowerCase()} upload is required` },
         { status: 400 }
@@ -110,9 +97,9 @@ export async function POST(request: Request) {
       data: {
         organizationId: session.organizationId,
         title: title.trim(),
-        imageUrl: primaryMediaUrl.trim(),
+        imageUrl: primaryMediaUrl,
         mediaType: effectiveMediaType,
-        videoUrl: effectiveMediaType === 'VIDEO' ? primaryMediaUrl.trim() : (videoUrl?.trim() || null),
+        videoUrl: effectiveMediaType === 'VIDEO' ? primaryMediaUrl : null,
         caption: caption?.trim() || null,
         facebookUrl: facebookUrl?.trim() || null,
         instagramUrl: instagramUrl?.trim() || null,
