@@ -92,6 +92,27 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [reminderData, setReminderData] = useState<WhatsAppReminderData | null>(null);
 
+  // Mobile Day Events Modal state
+  const [selectedDayModal, setSelectedDayModal] = useState<{
+    dateStr: string;
+    dateFormatted: string;
+    entries: CalendarEntryData[];
+  } | null>(null);
+
+  const handleOpenDayModal = (day: { date: Date }, dayEntries: CalendarEntryData[]) => {
+    if (dayEntries.length === 0) return;
+    const dateFormatted = day.date.toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    setSelectedDayModal({
+      dateStr: toLocalDateString(day.date),
+      dateFormatted,
+      entries: dayEntries,
+    });
+  };
+
   // Download Media Handler
   const handleDownloadMedia = async (url: string, title?: string) => {
     if (!url) return;
@@ -516,7 +537,14 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
             return (
               <div
                 key={idx}
+                onClick={() => {
+                  if (typeof window !== 'undefined' && window.innerWidth < 640 && dayEntries.length > 0) {
+                    handleOpenDayModal(day, dayEntries);
+                  }
+                }}
                 className={`min-h-[58px] sm:min-h-[110px] p-1 sm:p-2 transition-all flex flex-col justify-start ${
+                  dayEntries.length > 0 ? 'cursor-pointer' : ''
+                } ${
                   day.isCurrentMonth ? 'bg-white' : 'bg-[#FFA896]/5 text-slate-400'
                 }`}
               >
@@ -544,9 +572,14 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                   {dayEntries.slice(0, 1).map((entry) => (
                     <div
                       key={entry.id}
-                      onClick={() => {
-                        setSelectedEntry(entry);
-                        setIsDetailModalOpen(true);
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (dayEntries.length > 1) {
+                          handleOpenDayModal(day, dayEntries);
+                        } else {
+                          setSelectedEntry(entry);
+                          setIsDetailModalOpen(true);
+                        }
                       }}
                       className={`p-1 rounded text-[9px] cursor-pointer bg-white border border-[#244855]/15 shadow-2xs truncate ${getStatusBorderColor(
                         entry.status
@@ -560,9 +593,9 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                   ))}
                   {dayEntries.length > 1 && (
                     <button
-                      onClick={() => {
-                        setSelectedEntry(dayEntries[0]);
-                        setIsDetailModalOpen(true);
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenDayModal(day, dayEntries);
                       }}
                       className="w-full text-left text-[8px] font-bold text-[#E64833] bg-[#E64833]/10 px-1 py-0.5 rounded truncate"
                     >
@@ -1146,6 +1179,83 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
             setReminderData(null);
           }}
         />
+      )}
+
+      {/* MOBILE DAY EVENTS LIST MODAL / BOTTOM SHEET */}
+      {selectedDayModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#244855]/70 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-md sit-card bg-white border border-[#244855]/15 rounded-2xl shadow-2xl overflow-hidden text-[#244855] max-h-[85vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#244855]/10 bg-[#244855] text-white">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 rounded-lg bg-[#E64833] text-white shadow-sm">
+                  <CalendarIcon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-white">
+                    Events on {selectedDayModal.dateFormatted}
+                  </h3>
+                  <p className="text-xs text-white/80 font-medium">
+                    {selectedDayModal.entries.length} {selectedDayModal.entries.length === 1 ? 'event' : 'events'} scheduled
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedDayModal(null)}
+                className="p-1.5 text-white/80 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                title="Close Modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Event List */}
+            <div className="p-4 space-y-2.5 bg-[#FFF8F5]/60 flex-1 overflow-y-auto max-h-[65vh]">
+              {selectedDayModal.entries.map((entry) => (
+                <div
+                  key={entry.id}
+                  onClick={() => {
+                    setSelectedEntry(entry);
+                    setIsDetailModalOpen(true);
+                    setSelectedDayModal(null);
+                  }}
+                  className={`p-3.5 rounded-xl bg-white border border-[#244855]/15 shadow-sm hover:border-[#E64833] transition-all cursor-pointer space-y-2 ${getStatusBorderColor(
+                    entry.status
+                  )}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-bold text-[#244855] flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-[#E64833]" />
+                      <span>{entry.targetTime}</span>
+                    </span>
+                    <div>{getStatusBadge(entry.status)}</div>
+                  </div>
+
+                  <h4 className="font-extrabold text-sm text-[#244855] leading-snug line-clamp-2">
+                    {entry.title}
+                  </h4>
+
+                  <div className="flex items-center justify-between text-[11px] text-[#244855]/70 font-medium pt-1 border-t border-[#244855]/10">
+                    <span>Created by: <strong>{entry.createdBy}</strong></span>
+                    <span className="text-[#E64833] font-bold flex items-center gap-1">
+                      Tap to view details &rarr;
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-3 border-t border-[#244855]/10 bg-white flex justify-end">
+              <button
+                onClick={() => setSelectedDayModal(null)}
+                className="px-4 py-2 text-xs font-bold btn-outline w-full sm:w-auto"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
