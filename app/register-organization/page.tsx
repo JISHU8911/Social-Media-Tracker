@@ -58,8 +58,6 @@ export default function RegisterOrganizationPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send verification code');
 
-      // DEVELOPMENT ONLY
-      // Disable before production launch
       if (data.isTestMode) {
         setIsTestMode(true);
         setOtpCode('123456');
@@ -94,8 +92,6 @@ export default function RegisterOrganizationPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to resend code');
 
-      // DEVELOPMENT ONLY
-      // Disable before production launch
       if (data.isTestMode) {
         setIsTestMode(true);
         setOtpCode('123456');
@@ -143,7 +139,7 @@ export default function RegisterOrganizationPage() {
 
       setSuccess('Organization created successfully.');
       setTimeout(() => {
-        router.push(data.redirectUrl || '/organization/dashboard');
+        router.push(data.redirectUrl || '/admin');
       }, 500);
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');
@@ -153,24 +149,23 @@ export default function RegisterOrganizationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] flex items-center justify-center p-4 relative font-sans">
+    <div className="min-h-screen bg-[#FFF8F5] text-[#244855] flex items-center justify-center p-4 relative font-sans">
       <div className="w-full max-w-lg relative z-10">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <span className="text-xl font-extrabold text-[#212A31]">ClubHQ</span>
+            <span className="text-2xl font-extrabold text-[#244855]">ClubHQ</span>
           </Link>
-          <h1 className="text-2xl font-extrabold text-[#212A31]">
+          <h1 className="text-2xl font-extrabold text-[#244855]">
             {step === 1 ? 'Register Your Organization' : 'Verify Official Email'}
           </h1>
-          <p className="text-xs sm:text-sm text-[#2E3944] mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-[#244855]/80 mt-1 font-medium">
             {step === 1
-              ? 'Multi-tenant enterprise access for club social media & graphics teams.'
+              ? 'Multi-tenant organization access for social media & graphics teams.'
               : `Enter the 6-digit OTP code sent to ${officialEmail}`}
           </p>
         </div>
 
-        <div className="sit-card p-6 sm:p-8 bg-white border border-[#748D92] rounded-2xl shadow-soft space-y-4">
-          {/* DEVELOPMENT ONLY - Test mode banner */}
+        <div className="sit-card p-6 sm:p-8 bg-white border border-[#244855]/15 rounded-2xl shadow-soft space-y-4">
           {isTestMode && (
             <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-950 text-xs font-bold flex items-center gap-2 shadow-sm">
               <Terminal className="w-4 h-4 text-amber-700 shrink-0" />
@@ -179,14 +174,14 @@ export default function RegisterOrganizationPage() {
           )}
 
           {error && (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-3">
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-[#9B1313] text-xs font-medium flex items-center gap-3">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {success && !isTestMode && (
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-3">
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-3">
               <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600" />
               <span>{success}</span>
             </div>
@@ -195,80 +190,80 @@ export default function RegisterOrganizationPage() {
           {step === 1 ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-2">
                   Organization Name *
                 </label>
                 <div className="relative">
-                  <Building2 className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#748D92]" />
+                  <Building2 className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#244855]/40" />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Acme Corp / Rotaract Club"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl sit-input text-xs font-medium"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl sit-input text-xs sm:text-sm font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-2">
                   Official Email Address *
                 </label>
                 <div className="relative">
-                  <Mail className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#748D92]" />
+                  <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#244855]/40" />
                   <input
                     type="email"
                     required
                     value={officialEmail}
                     onChange={(e) => setOfficialEmail(e.target.value)}
                     placeholder="contact@org.com"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl sit-input text-xs font-medium"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl sit-input text-xs sm:text-sm font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-2">
                   Admin Password *
                 </label>
                 <div className="relative">
-                  <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#748D92]" />
+                  <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#244855]/40" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="At least 8 characters"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl sit-input text-xs font-medium"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl sit-input text-xs sm:text-sm font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-2">
                   Confirm Admin Password *
                 </label>
                 <div className="relative">
-                  <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#748D92]" />
+                  <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#244855]/40" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter password"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl sit-input text-xs font-medium"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl sit-input text-xs sm:text-sm font-medium"
                   />
                 </div>
               </div>
 
-              <div className="text-xs text-[#2E3944]">
+              <div className="text-xs text-[#244855]">
                 <label className="flex items-center gap-2 cursor-pointer font-medium">
                   <input
                     type="checkbox"
                     checked={showPassword}
                     onChange={(e) => setShowPassword(e.target.checked)}
-                    className="rounded border-[#748D92] text-[#124E66] focus:ring-0"
+                    className="rounded border-[#244855]/30 text-[#E64833] focus:ring-0"
                   />
                   <span>Show passwords</span>
                 </label>
@@ -277,28 +272,28 @@ export default function RegisterOrganizationPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary w-full py-3.5 text-xs font-bold flex items-center justify-center gap-2 shadow-md"
+                className="btn-primary w-full py-3.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md"
               >
                 {loading ? 'Sending Code...' : 'Send Verification Code'} <ArrowRight className="w-4 h-4" />
               </button>
             </form>
           ) : (
             <form onSubmit={handleVerifyAndRegister} className="space-y-5">
-              <div className="p-4 rounded-xl bg-[#D3D9D4]/50 border border-[#748D92]/40 text-center space-y-1">
-                <span className="text-[10px] font-bold uppercase text-[#2E3944] block">
+              <div className="p-4 rounded-xl bg-[#FFA896]/15 border border-[#244855]/10 text-center space-y-1">
+                <span className="text-[10px] font-bold uppercase text-[#244855]/70 block">
                   Verification Code Sent To
                 </span>
-                <span className="text-sm font-extrabold text-[#212A31] block truncate font-mono">
+                <span className="text-sm font-extrabold text-[#244855] block truncate font-mono">
                   {officialEmail}
                 </span>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-2 text-center">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-2 text-center">
                   Enter 6-Digit Code *
                 </label>
                 <div className="relative">
-                  <KeyRound className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#748D92]" />
+                  <KeyRound className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#244855]/40" />
                   <input
                     type="text"
                     required
@@ -306,7 +301,7 @@ export default function RegisterOrganizationPage() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="123456"
-                    className="w-full pl-11 pr-4 py-3.5 rounded-xl sit-input text-center text-lg font-mono font-bold tracking-widest text-[#212A31]"
+                    className="w-full pl-10 pr-4 py-3.5 rounded-xl sit-input text-center text-lg font-mono font-bold tracking-widest text-[#244855]"
                   />
                 </div>
               </div>
@@ -314,17 +309,17 @@ export default function RegisterOrganizationPage() {
               <button
                 type="submit"
                 disabled={loading || otpCode.length !== 6}
-                className="btn-primary w-full py-3.5 text-xs font-bold flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+                className="btn-primary w-full py-3.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
               >
                 {loading ? 'Verifying...' : 'Verify Email & Submit Registration'}{' '}
                 <ShieldCheck className="w-4 h-4" />
               </button>
 
-              <div className="flex items-center justify-between text-xs border-t border-[#748D92]/30 pt-3">
+              <div className="flex items-center justify-between text-xs border-t border-[#244855]/10 pt-3">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="text-[#2E3944] hover:text-[#212A31] font-semibold"
+                  className="text-[#244855]/80 hover:text-[#244855] font-semibold"
                 >
                   ← Edit Form Details
                 </button>
@@ -333,7 +328,7 @@ export default function RegisterOrganizationPage() {
                   type="button"
                   onClick={handleResendOtp}
                   disabled={resending}
-                  className="text-[#124E66] font-bold hover:underline inline-flex items-center gap-1"
+                  className="text-[#E64833] font-bold hover:underline inline-flex items-center gap-1"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
                   {resending ? 'Resending...' : 'Resend Code'}
@@ -342,9 +337,9 @@ export default function RegisterOrganizationPage() {
             </form>
           )}
 
-          <div className="mt-6 border-t border-[#748D92]/30 pt-4 text-center text-xs text-[#2E3944]">
+          <div className="mt-6 border-t border-[#244855]/10 pt-4 text-center text-xs text-[#244855]/80">
             Already registered?{' '}
-            <Link href="/login" className="text-[#124E66] font-bold hover:underline">
+            <Link href="/login" className="text-[#E64833] font-bold hover:underline">
               Sign In
             </Link>
           </div>

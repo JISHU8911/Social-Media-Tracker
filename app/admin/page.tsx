@@ -47,6 +47,7 @@ export default function AdminDashboardPage() {
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [orgName, setOrgName] = useState('ClubHQ');
 
   const [selectedPostForWhatsApp, setSelectedPostForWhatsApp] = useState<PostItem | null>(null);
 
@@ -55,6 +56,9 @@ export default function AdminDashboardPage() {
       .then((res) => {
         if (!res.ok) router.push('/login');
         return res.json();
+      })
+      .then((data) => {
+        if (data?.user?.organizationName) setOrgName(data.user.organizationName);
       })
       .catch(() => router.push('/login'));
 
@@ -94,21 +98,21 @@ export default function AdminDashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
+    <div className="min-h-screen bg-[#FFF8F5] text-[#244855] font-sans">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-xs font-bold text-[#124E66] mb-1">
+            <div className="flex items-center space-x-2 text-xs font-bold text-[#E64833] mb-1">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>SIT Executive HQ</span>
+              <span>{orgName} Executive Portal</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#244855] tracking-tight">
               Dashboard Overview
             </h1>
-            <p className="text-xs sm:text-sm text-[#2E3944] font-medium">
+            <p className="text-xs sm:text-sm text-[#244855]/80 font-medium">
               Employee social media engagement metrics and active post performance.
             </p>
           </div>
@@ -127,65 +131,65 @@ export default function AdminDashboardPage() {
           {/* Total Posts */}
           <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                 Total Posts
               </span>
-              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                <FileText className="h-5 w-5 text-[#212A31]" />
+              <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                <FileText className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
               {summary ? summary.totalPosts : 0}
             </div>
-            <p className="text-[11px] text-[#2E3944] font-medium">Active campaigns in SIT</p>
+            <p className="text-[11px] text-[#244855]/70 font-medium">Active campaign posts</p>
           </div>
 
           {/* Total Submissions */}
           <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                 Total Submissions
               </span>
-              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                <CheckCircle className="h-5 w-5 text-[#212A31]" />
+              <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                <CheckCircle className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
               {summary ? summary.totalSubmissions : 0}
             </div>
-            <p className="text-[11px] text-[#2E3944] font-medium">Recorded employee responses</p>
+            <p className="text-[11px] text-[#244855]/70 font-medium">Recorded employee responses</p>
           </div>
 
           {/* Participated Employees */}
           <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                 Participated Employees
               </span>
-              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                <Users className="h-5 w-5 text-[#212A31]" />
+              <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                <Users className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
               {summary ? summary.totalEmployeesParticipated : 0}
             </div>
-            <p className="text-[11px] text-[#2E3944] font-medium">Unique active workforce</p>
+            <p className="text-[11px] text-[#244855]/70 font-medium">Unique active workforce</p>
           </div>
 
           {/* Total Interactions */}
           <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                 Total Interactions
               </span>
-              <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                <Activity className="h-5 w-5 text-[#212A31]" />
+              <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                <Activity className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
               {summary ? summary.totalInteractions : 0}
             </div>
-            <p className="text-[11px] text-[#2E3944] font-medium">Aggregated digital actions</p>
+            <p className="text-[11px] text-[#244855]/70 font-medium">Aggregated digital actions</p>
           </div>
         </div>
 
@@ -195,14 +199,14 @@ export default function AdminDashboardPage() {
           <div className="lg:col-span-2 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-extrabold text-[#212A31]">Recent Posts</h2>
-                <p className="text-xs text-[#2E3944] font-medium">
+                <h2 className="text-lg font-extrabold text-[#244855]">Recent Posts</h2>
+                <p className="text-xs text-[#244855]/80 font-medium">
                   Track and distribute social campaigns.
                 </p>
               </div>
 
               <div className="relative max-w-xs">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#748D92]" />
+                <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#244855]/40" />
                 <input
                   type="text"
                   placeholder="Search posts..."
@@ -214,14 +218,14 @@ export default function AdminDashboardPage() {
             </div>
 
             {loading ? (
-              <div className="sit-card p-12 text-center text-xs font-semibold text-[#2E3944]">
+              <div className="sit-card p-12 text-center text-xs font-semibold text-[#244855]">
                 Loading campaign posts...
               </div>
             ) : filteredPosts.length === 0 ? (
               <div className="sit-card p-12 text-center space-y-3">
-                <FileText className="h-10 w-10 text-[#748D92] mx-auto" />
-                <h3 className="text-sm font-bold text-[#212A31]">No Campaign Posts Found</h3>
-                <p className="text-xs text-[#2E3944]">Create your first post to start tracking employee social interaction.</p>
+                <FileText className="h-10 w-10 text-[#244855]/40 mx-auto" />
+                <h3 className="text-sm font-bold text-[#244855]">No Campaign Posts Found</h3>
+                <p className="text-xs text-[#244855]/80">Create your first post to start tracking employee social interaction.</p>
                 <Link href="/admin/posts/new" className="btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs">
                   <PlusCircle className="h-4 w-4" /> Create Post
                 </Link>
@@ -231,35 +235,35 @@ export default function AdminDashboardPage() {
                 {filteredPosts.slice(0, 6).map((post) => (
                   <div
                     key={post.id}
-                    className="sit-card p-5 bg-white border border-[#748D92] rounded-2xl space-y-4 hover:border-[#212A31] transition-all flex flex-col justify-between"
+                    className="sit-card p-5 bg-white border border-[#244855]/15 rounded-2xl space-y-4 hover:border-[#244855]/40 transition-all flex flex-col justify-between"
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#D3D9D4] text-[#212A31] border border-[#748D92]">
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FFA896]/20 text-[#244855] border border-[#244855]/10">
                           ID: {post.trackingCode}
                         </span>
-                        <span className="text-[11px] font-bold text-[#124E66] flex items-center gap-1">
+                        <span className="text-[11px] font-bold text-[#E64833] flex items-center gap-1">
                           <CheckCircle className="h-3.5 w-3.5" />
                           {post._count.submissions} Submissions
                         </span>
                       </div>
 
-                      <h3 className="font-extrabold text-sm text-[#212A31] line-clamp-2">
+                      <h3 className="font-extrabold text-sm text-[#244855] line-clamp-2">
                         {post.title}
                       </h3>
                     </div>
 
-                    <div className="pt-3 border-t border-[#748D92]/30 flex items-center justify-between gap-2">
+                    <div className="pt-3 border-t border-[#244855]/10 flex items-center justify-between gap-2">
                       <button
                         onClick={() => setSelectedPostForWhatsApp(post)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#124E66] text-white hover:bg-[#0E3E52] flex items-center gap-1.5 shadow-sm"
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold btn-primary flex items-center gap-1.5 shadow-sm"
                       >
                         <MessageSquare className="h-3.5 w-3.5" /> WhatsApp Alert
                       </button>
 
                       <Link
                         href={`/admin/posts/${post.id}`}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#212A31] text-white hover:bg-[#192026] flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold btn-secondary flex items-center gap-1"
                       >
                         View Details <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
@@ -273,32 +277,32 @@ export default function AdminDashboardPage() {
           {/* Activity Feed / Submissions Widget */}
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-extrabold text-[#212A31]">Recent Activity</h2>
-              <p className="text-xs text-[#2E3944] font-medium">
+              <h2 className="text-lg font-extrabold text-[#244855]">Recent Activity</h2>
+              <p className="text-xs text-[#244855]/80 font-medium">
                 Live employee engagement logging feed.
               </p>
             </div>
 
-            <div className="sit-card p-5 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
+            <div className="sit-card p-5 bg-white border border-[#244855]/15 rounded-2xl space-y-4 shadow-soft">
               {recentSubmissions.length === 0 ? (
-                <div className="text-center py-6 text-xs text-[#2E3944] font-medium">
+                <div className="text-center py-6 text-xs text-[#244855]/70 font-medium">
                   No recent activity logged yet.
                 </div>
               ) : (
-                <div className="space-y-4 divide-y divide-[#748D92]/30">
+                <div className="space-y-4 divide-y divide-[#244855]/10">
                   {recentSubmissions.map((sub, i) => (
                     <div key={sub.id || i} className={`${i > 0 ? 'pt-3' : ''} flex items-start space-x-3`}>
-                      <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31] shrink-0 mt-0.5">
+                      <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833] shrink-0 mt-0.5">
                         <TrendingUp className="h-4 w-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-[#212A31] truncate">
+                        <p className="text-xs font-bold text-[#244855] truncate">
                           {sub.user?.name || sub.userName || 'Employee'}
                         </p>
-                        <p className="text-[11px] text-[#2E3944] truncate font-medium">
+                        <p className="text-[11px] text-[#244855]/80 truncate font-medium">
                           Submitted proof for {sub.post?.title || 'Campaign Post'}
                         </p>
-                        <span className="text-[10px] text-[#748D92] flex items-center gap-1 mt-1 font-mono">
+                        <span className="text-[10px] text-[#244855]/60 flex items-center gap-1 mt-1 font-mono">
                           <Clock className="h-3 w-3" />
                           {new Date(sub.createdAt).toLocaleDateString()}
                         </span>
@@ -308,10 +312,10 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
-              <div className="pt-3 border-t border-[#748D92]/30">
+              <div className="pt-3 border-t border-[#244855]/10">
                 <Link
                   href="/admin/analytics"
-                  className="w-full py-2 rounded-xl btn-secondary text-xs font-bold text-center block"
+                  className="w-full py-2.5 rounded-xl btn-secondary text-xs font-bold text-center block"
                 >
                   View Full Analytics Engine
                 </Link>

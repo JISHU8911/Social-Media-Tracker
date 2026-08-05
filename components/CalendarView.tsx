@@ -75,6 +75,7 @@ function toLocalDateString(dateInput: Date | string): string {
 export default function CalendarView({ userRole, canManage }: CalendarViewProps) {
   const [entries, setEntries] = useState<CalendarEntryData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [orgName, setOrgName] = useState<string>('ClubHQ');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'agenda'>('month');
   const [searchQuery, setSearchQuery] = useState('');
@@ -110,6 +111,14 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
 
   useEffect(() => {
     fetchEntries();
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user?.organizationName) {
+          setOrgName(data.user.organizationName);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const fetchEntries = async () => {
@@ -360,14 +369,14 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
   ];
 
   return (
-    <div className="space-y-6 text-[#212A31] font-sans">
+    <div className="space-y-6 text-[#244855] font-sans">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#212A31] flex items-center gap-2">
-            <CalendarIcon className="w-6 h-6 text-[#124E66]" /> Marketing Campaign Calendar
+          <h1 className="text-2xl font-extrabold text-[#244855] flex items-center gap-2">
+            <CalendarIcon className="w-6 h-6 text-[#E64833]" /> {orgName} Campaign Calendar
           </h1>
-          <p className="text-xs text-[#2E3944] font-medium mt-1">
+          <p className="text-xs text-[#244855]/80 font-medium mt-1">
             Schedule social media posters, manage captions, and track posting workflows.
           </p>
         </div>
@@ -378,7 +387,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
               setNewDate(toLocalDateString(new Date()));
               setIsCreateModalOpen(true);
             }}
-            className="btn-primary px-4 py-2 text-xs font-bold flex items-center gap-1.5 shadow-md"
+            className="btn-primary px-4 py-2.5 text-xs font-bold flex items-center gap-1.5 shadow-md"
           >
             <Plus className="w-4 h-4" /> Add Calendar Entry
           </button>
@@ -386,38 +395,38 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
       </div>
 
       {/* Control Bar: Filters & Views */}
-      <div className="sit-card p-4 bg-white border border-[#748D92] rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-soft">
+      <div className="sit-card p-4 bg-white border border-[#244855]/15 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-soft">
         <div className="flex items-center space-x-2">
-          <div className="flex items-center bg-[#D3D9D4] rounded-xl p-1 border border-[#748D92]">
+          <div className="flex items-center bg-[#FFA896]/15 rounded-xl p-1 border border-[#244855]/10">
             <button
               onClick={prevMonth}
-              className="p-1.5 hover:bg-white rounded-lg text-[#212A31] transition-all"
+              className="p-1.5 hover:bg-white rounded-lg text-[#244855] transition-all"
               title="Previous Month"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={todayMonth}
-              className="px-3 py-1 text-xs font-bold text-[#212A31] hover:bg-white rounded-lg transition-all"
+              className="px-3 py-1 text-xs font-bold text-[#244855] hover:bg-white rounded-lg transition-all"
             >
               Today
             </button>
             <button
               onClick={nextMonth}
-              className="p-1.5 hover:bg-white rounded-lg text-[#212A31] transition-all"
+              className="p-1.5 hover:bg-white rounded-lg text-[#244855] transition-all"
               title="Next Month"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
-          <span className="text-base font-extrabold text-[#212A31] pl-2">
+          <span className="text-base font-extrabold text-[#244855] pl-2">
             {monthNames[month]} {year}
           </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#2E3944]" />
+            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#244855]/40" />
             <input
               type="text"
               placeholder="Search campaigns..."
@@ -430,7 +439,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl sit-input text-xs font-medium"
+            className="px-3.5 py-2 rounded-xl sit-input text-xs font-medium"
           >
             <option value="ALL">All Statuses</option>
             <option value="PLANNED">PLANNED</option>
@@ -443,17 +452,16 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
       </div>
 
       {/* Month View Grid */}
-      <div className="sit-card bg-white border border-[#748D92] rounded-2xl overflow-hidden shadow-soft">
-        <div className="grid grid-cols-7 border-b border-[#748D92]/40 bg-[#212A31] text-white text-center text-xs font-extrabold py-3 uppercase tracking-wider">
+      <div className="sit-card bg-white border border-[#244855]/15 rounded-2xl overflow-hidden shadow-soft">
+        <div className="grid grid-cols-7 border-b border-white/10 bg-[#244855] text-white text-center text-xs font-extrabold py-3 uppercase tracking-wider">
           <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
         </div>
 
-        <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-[#748D92]/30 bg-white">
+        <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-[#244855]/10 bg-white">
           {calendarDays.map((day, idx) => {
             const dayStr = toLocalDateString(day.date);
             const isToday = dayStr === toLocalDateString(new Date());
 
-            // FIX 4: Strict local date string comparison to eliminate Date Shift bug
             const dayEntries = filteredEntries.filter(
               (e) => toLocalDateString(e.date) === dayStr
             );
@@ -462,23 +470,23 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
               <div
                 key={idx}
                 className={`min-h-[110px] p-2 transition-all ${
-                  day.isCurrentMonth ? 'bg-white' : 'bg-[#D3D9D4]/30 text-slate-400'
+                  day.isCurrentMonth ? 'bg-white' : 'bg-[#FFA896]/5 text-slate-400'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <span
                     className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-extrabold ${
                       isToday
-                        ? 'bg-[#124E66] text-white shadow-sm'
+                        ? 'bg-[#E64833] text-white shadow-sm'
                         : day.isCurrentMonth
-                        ? 'text-[#212A31]'
+                        ? 'text-[#244855]'
                         : 'text-slate-400'
                     }`}
                   >
                     {day.date.getDate()}
                   </span>
                   {dayEntries.length > 0 && (
-                    <span className="text-[10px] font-bold text-[#2E3944]">
+                    <span className="text-[10px] font-bold text-[#244855]/70">
                       {dayEntries.length} {dayEntries.length === 1 ? 'item' : 'items'}
                     </span>
                   )}
@@ -492,20 +500,19 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                         setSelectedEntry(entry);
                         setIsDetailModalOpen(true);
                       }}
-                      className={`p-1.5 rounded-lg text-xs cursor-pointer transition-all hover:scale-[1.02] bg-white border border-[#748D92]/60 shadow-sm ${getStatusBorderColor(
+                      className={`p-1.5 rounded-lg text-xs cursor-pointer transition-all hover:scale-[1.02] bg-white border border-[#244855]/15 shadow-sm ${getStatusBorderColor(
                         entry.status
                       )}`}
                     >
                       <div className="flex items-center justify-between gap-1">
-                        <span className="font-extrabold text-[#212A31] truncate text-[11px]">
+                        <span className="font-extrabold text-[#244855] truncate text-[11px]">
                           {entry.title}
                         </span>
-                        <span className="font-mono text-[10px] text-[#2E3944] font-semibold flex-shrink-0">
+                        <span className="font-mono text-[10px] text-[#244855]/70 font-semibold flex-shrink-0">
                           {entry.targetTime}
                         </span>
                       </div>
 
-                      {/* ADD 1: Independent Media & Caption Status indicators */}
                       <div className="flex items-center gap-1 mt-1">
                         {entry.creativeUrl ? (
                           <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-800">

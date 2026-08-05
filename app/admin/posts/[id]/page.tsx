@@ -282,14 +282,6 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
                 controls
                 className="w-full h-full object-contain"
               />
-            ) : post.mediaType === 'IMAGE' ? (
-              <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
-            ) : ['.mp4', '.webm', '.mov'].some(ext => (post.videoUrl || post.imageUrl || '').toLowerCase().includes(ext)) ? (
-              <video
-                src={post.videoUrl || post.imageUrl}
-                controls
-                className="w-full h-full object-contain"
-              />
             ) : post.imageUrl ? (
               <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
             ) : (

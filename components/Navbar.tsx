@@ -32,6 +32,7 @@ export default function Navbar() {
     role: string;
     organizationId?: string | null;
     organizationName?: string | null;
+    organizationLogo?: string | null;
     orgIdCode?: string | null;
   } | null>(null);
 
@@ -43,6 +44,15 @@ export default function Navbar() {
       })
       .catch(() => {});
   }, []);
+
+  const brandName = user?.organizationName || 'ClubHQ';
+  const logoUrl = user?.organizationLogo || null;
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.title = brandName;
+    }
+  }, [brandName]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -104,20 +114,24 @@ export default function Navbar() {
       user?.role === 'ADMIN');
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#212A31] border-b border-[#2E3944] shadow-md text-white">
+    <header className="sticky top-0 z-50 w-full bg-[#244855] text-white shadow-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Title */}
           <div className="flex items-center space-x-3">
-            <Link href="/" className="flex items-center space-x-2 group">
-              <span className="text-lg font-extrabold text-white tracking-tight">
-                ClubHQ
-              </span>
-              {user?.organizationName && (
-                <span className="text-[10px] text-[#748D92] font-semibold font-mono hidden sm:inline">
-                  ({user.organizationName})
-                </span>
+            <Link href="/" className="flex items-center space-x-2.5 group">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={brandName}
+                  className="h-8 w-8 object-contain rounded-lg bg-white/10 p-0.5 border border-white/10"
+                />
+              ) : (
+                <Building2 className="h-5 w-5 text-[#E64833]" />
               )}
+              <span className="text-lg font-extrabold text-white tracking-tight">
+                {brandName}
+              </span>
             </Link>
           </div>
 
@@ -130,13 +144,13 @@ export default function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                     isActive
-                      ? 'bg-[#124E66] text-white shadow-sm font-bold'
-                      : 'text-slate-200 hover:text-white hover:bg-[#2E3944]'
+                      ? 'bg-[#E64833] text-white shadow-sm'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -148,7 +162,7 @@ export default function Navbar() {
             {isOrgAdminUser && (
               <Link
                 href="/admin/posts/new"
-                className="hidden sm:inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#124E66] hover:bg-[#0E3E52] text-white shadow-sm transition-all"
+                className="hidden sm:inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold btn-primary shadow-sm"
               >
                 <PlusCircle className="h-4 w-4" />
                 <span>Create Post</span>
@@ -156,10 +170,10 @@ export default function Navbar() {
             )}
 
             {user ? (
-              <div className="flex items-center space-x-2 pl-2 sm:pl-3 border-l border-[#2E3944]">
+              <div className="flex items-center space-x-2.5 pl-2 sm:pl-3 border-l border-white/15">
                 <div className="hidden sm:flex flex-col items-end">
-                  <span className="text-xs font-semibold text-white max-w-[120px] truncate">{user.name}</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#124E66] text-white uppercase">
+                  <span className="text-xs font-bold text-white max-w-[130px] truncate">{user.name}</span>
+                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/15 text-white uppercase tracking-wider">
                     {user.role}
                   </span>
                 </div>
@@ -167,7 +181,7 @@ export default function Navbar() {
                 <button
                   onClick={handleLogout}
                   title="Sign Out"
-                  className="p-1.5 sm:p-2 text-[#748D92] hover:text-white hover:bg-[#124E66] rounded-xl transition-colors"
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
                 </button>
@@ -175,7 +189,7 @@ export default function Navbar() {
                 {/* Mobile Menu Toggle Button */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="lg:hidden p-1.5 text-white hover:bg-[#2E3944] rounded-xl"
+                  className="lg:hidden p-2 text-white hover:bg-white/10 rounded-xl"
                   title="Toggle Menu"
                 >
                   {mobileMenuOpen ? <CloseIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -185,15 +199,15 @@ export default function Navbar() {
               <div className="flex items-center space-x-2">
                 <Link
                   href="/login"
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-[#2E3944] hover:bg-[#242D36]"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-white hover:bg-white/10 transition-colors"
                 >
-                  Login
+                  Sign In
                 </Link>
                 <Link
-                  href="/register-organization"
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#124E66] hover:bg-[#0E3E52]"
+                  href="/join-organization"
+                  className="btn-primary px-4 py-2 rounded-xl text-xs font-bold shadow-sm"
                 >
-                  Register
+                  Join Organization
                 </Link>
               </div>
             )}
@@ -202,8 +216,8 @@ export default function Navbar() {
 
         {/* Mobile Navigation Drawer / Menu */}
         {(mobileMenuOpen || user) && (
-          <nav className={`${mobileMenuOpen ? 'block' : 'hidden lg:hidden'} py-2 space-y-1 border-t border-[#2E3944]`}>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          <nav className={`${mobileMenuOpen ? 'block' : 'hidden lg:hidden'} py-3 space-y-1 border-t border-white/10`}>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -212,13 +226,13 @@ export default function Navbar() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs font-medium ${
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold ${
                       isActive
-                        ? 'bg-[#124E66] text-white font-bold'
-                        : 'text-slate-200 hover:bg-[#2E3944]'
+                        ? 'bg-[#E64833] text-white shadow-sm'
+                        : 'text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    <Icon className="h-3.5 w-3.5" />
+                    <Icon className="h-4 w-4" />
                     <span className="truncate">{item.label}</span>
                   </Link>
                 );

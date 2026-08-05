@@ -21,6 +21,7 @@ export interface AuthSession {
   organizationStatus?: string | null;
   orgIdCode?: string | null;
   organizationName?: string | null;
+  organizationLogo?: string | null;
 }
 
 function getJwtSecret(): Uint8Array {
@@ -81,6 +82,7 @@ export async function getServerSession(): Promise<AuthSession | null> {
   let effectiveOrgStatus = user.organization?.status || null;
   let effectiveOrgIdCode = user.organization?.orgId || null;
   let effectiveOrgName = user.organization?.name || null;
+  let effectiveOrgLogo = (user.organization as any)?.logoUrl || null;
 
   // If user has a membership and organizationId wasn't direct, pull from membership
   if (!effectiveOrgId && user.memberships.length > 0) {
@@ -89,6 +91,7 @@ export async function getServerSession(): Promise<AuthSession | null> {
     effectiveOrgStatus = primaryMembership.organization.status;
     effectiveOrgIdCode = primaryMembership.organization.orgId;
     effectiveOrgName = primaryMembership.organization.name;
+    effectiveOrgLogo = (primaryMembership.organization as any)?.logoUrl || null;
   }
 
   // Section 5 Rules:
@@ -106,6 +109,7 @@ export async function getServerSession(): Promise<AuthSession | null> {
     organizationStatus: effectiveOrgStatus,
     orgIdCode: effectiveOrgIdCode,
     organizationName: effectiveOrgName,
+    organizationLogo: effectiveOrgLogo,
   };
 }
 

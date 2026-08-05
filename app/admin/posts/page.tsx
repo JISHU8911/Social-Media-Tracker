@@ -65,16 +65,16 @@ export default function AdminPostsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
+    <div className="min-h-screen bg-[#FFF8F5] text-[#244855] font-sans">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#244855] tracking-tight">
               Post Management
             </h1>
-            <p className="text-xs sm:text-sm text-[#2E3944] font-medium">
+            <p className="text-xs sm:text-sm text-[#244855]/80 font-medium">
               Create and manage social media campaign tracking links and broadcast messages.
             </p>
           </div>
@@ -91,7 +91,7 @@ export default function AdminPostsPage() {
         {/* Filter bar */}
         <div className="flex items-center justify-between">
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3.5 top-3 h-4 w-4 text-[#748D92]" />
+            <Search className="absolute left-3.5 top-3 h-4 w-4 text-[#244855]/40" />
             <input
               type="text"
               placeholder="Search by post title..."
@@ -104,14 +104,14 @@ export default function AdminPostsPage() {
 
         {/* Posts Grid */}
         {loading ? (
-          <div className="sit-card p-12 text-center text-xs font-semibold text-[#2E3944]">
+          <div className="sit-card p-12 text-center text-xs font-semibold text-[#244855]">
             Loading campaign posts...
           </div>
         ) : filteredPosts.length === 0 ? (
           <div className="sit-card p-12 text-center space-y-3">
-            <FileText className="h-10 w-10 text-[#748D92] mx-auto" />
-            <h3 className="text-sm font-bold text-[#212A31]">No Posts Found</h3>
-            <p className="text-xs text-[#2E3944]">Create a new campaign post to start tracking employee social interactions.</p>
+            <FileText className="h-10 w-10 text-[#244855]/40 mx-auto" />
+            <h3 className="text-sm font-bold text-[#244855]">No Posts Found</h3>
+            <p className="text-xs text-[#244855]/80">Create a new campaign post to start tracking employee social interactions.</p>
             <Link href="/admin/posts/new" className="btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold">
               <PlusCircle className="h-4 w-4" /> Create Post
             </Link>
@@ -121,37 +121,37 @@ export default function AdminPostsPage() {
             {filteredPosts.map((post) => (
               <div
                 key={post.id}
-                className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl flex flex-col justify-between hover:border-[#212A31] transition-all shadow-soft"
+                className="sit-card p-6 bg-white border border-[#244855]/15 rounded-2xl flex flex-col justify-between hover:border-[#244855]/40 transition-all shadow-soft"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Link
                       href={`/post/${post.trackingCode}`}
                       target="_blank"
-                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#D3D9D4] text-[#124E66] border border-[#748D92] hover:underline inline-flex items-center gap-1"
+                      className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FFA896]/20 text-[#244855] border border-[#244855]/10 hover:underline inline-flex items-center gap-1"
                       title="Open Public Tracking Link"
                     >
                       ID: {post.trackingCode} <ExternalLink className="w-3 h-3" />
                     </Link>
-                    <span className="text-xs font-bold text-[#124E66] flex items-center gap-1">
+                    <span className="text-xs font-bold text-[#E64833] flex items-center gap-1">
                       <CheckCircle className="h-3.5 w-3.5" />
                       {post._count?.submissions || 0} Submissions
                     </span>
                   </div>
 
-                  <h3 className="font-extrabold text-base text-[#212A31] line-clamp-2">
+                  <h3 className="font-extrabold text-base text-[#244855] line-clamp-2">
                     {post.title}
                   </h3>
 
-                  <p className="text-xs text-[#2E3944] font-mono">
+                  <p className="text-xs text-[#244855]/60 font-mono">
                     Created: {new Date(post.createdAt).toLocaleDateString()}
                   </p>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-[#748D92]/30 flex items-center justify-between gap-2">
+                <div className="pt-4 mt-4 border-t border-[#244855]/10 flex items-center justify-between gap-2">
                   <button
                     onClick={() => setSelectedPostForWhatsApp(post)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#124E66] text-white hover:bg-[#0E3E52] flex items-center gap-1.5 shadow-sm"
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold btn-primary flex items-center gap-1.5 shadow-sm"
                   >
                     <MessageSquare className="h-3.5 w-3.5" /> WhatsApp Alert
                   </button>
@@ -159,14 +159,14 @@ export default function AdminPostsPage() {
                   <div className="flex items-center space-x-2">
                     <Link
                       href={`/admin/posts/${post.id}`}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#212A31] text-white hover:bg-[#192026] flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold btn-secondary flex items-center gap-1"
                     >
                       Details <ExternalLink className="h-3.5 w-3.5" />
                     </Link>
 
                     <button
                       onClick={() => handleDeletePost(post.id, post.title)}
-                      className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-1.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                       title="Delete Campaign Post"
                     >
                       <Trash2 className="h-4 w-4" />

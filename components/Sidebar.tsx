@@ -73,19 +73,16 @@ export default function Sidebar({
         ]),
   ];
 
+  const displayBrand = organizationName || 'ClubHQ';
+
   return (
-    <aside className="w-64 bg-[#212A31] text-white flex flex-col min-h-screen border-r border-[#2E3944] shadow-lg">
+    <aside className="w-64 bg-[#244855] text-white flex flex-col min-h-screen border-r border-white/10 shadow-lg">
       {/* Brand Header */}
-      <div className="p-6 border-b border-[#2E3944] flex items-center justify-between">
+      <div className="p-6 border-b border-white/10 flex items-center justify-between">
         <div>
           <h2 className="font-extrabold text-base tracking-tight text-white">
-            ClubHQ
+            {displayBrand}
           </h2>
-          {organizationName && (
-            <p className="text-[11px] text-[#748D92] font-medium truncate">
-              {organizationName}
-            </p>
-          )}
         </div>
       </div>
 

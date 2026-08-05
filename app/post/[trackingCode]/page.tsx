@@ -28,6 +28,8 @@ interface PostData {
   linkedinUrl?: string | null;
   xUrl?: string | null;
   trackingCode: string;
+  organizationName?: string | null;
+  organizationLogo?: string | null;
 }
 
 interface DesignationData {
@@ -250,7 +252,7 @@ export default function EmployeeTrackingPage({
   const selectedDesignationName = designations.find((d) => d.id === designationId)?.designationName || '';
 
   return (
-    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] py-8 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="min-h-screen bg-[#FFF8F5] text-[#244855] py-8 px-4 sm:px-6 lg:px-8 font-sans">
       <DuplicateSubmissionModal
         isOpen={duplicateModalOpen}
         onClose={() => setDuplicateModalOpen(false)}
@@ -262,36 +264,28 @@ export default function EmployeeTrackingPage({
       <div className="max-w-3xl mx-auto space-y-8">
         {/* Header / Brand */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white border border-[#748D92] text-[#212A31] text-xs font-bold shadow-sm">
-            <Sparkles className="h-3.5 w-3.5 text-[#124E66]" />
-            <span>ClubHQ</span>
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-white border border-[#244855]/15 text-[#E64833] text-xs font-bold shadow-sm">
+            {post?.organizationLogo ? (
+              <img src={post.organizationLogo} alt={post.organizationName || 'Logo'} className="h-4 w-4 object-contain rounded-full" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5 text-[#E64833]" />
+            )}
+            <span>{post?.organizationName || 'ClubHQ'}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31] tracking-tight">
-            Employee Engagement Portal
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#244855] tracking-tight">
+            {post?.organizationName ? `${post.organizationName} Engagement Portal` : 'Employee Engagement Portal'}
           </h1>
-          <p className="text-xs sm:text-sm text-[#2E3944] font-medium max-w-lg mx-auto">
-            Review company social media post details below, interact on your platforms, and log your engagement actions.
+          <p className="text-xs sm:text-sm text-[#244855]/80 font-medium max-w-lg mx-auto">
+            Review organization social media post details below, interact on your platforms, and log your engagement actions.
           </p>
         </div>
 
         {/* Post Card */}
         {post && (
-          <div className="sit-card overflow-hidden shadow-md border-slate-200">
+          <div className="sit-card overflow-hidden shadow-soft border-[#244855]/15 bg-white rounded-2xl">
             {/* Post Media (Image or Video) */}
-            <div className="relative w-full min-h-[240px] sm:min-h-[320px] max-h-[450px] bg-slate-900 flex items-center justify-center overflow-hidden border-b border-slate-200">
+            <div className="relative w-full min-h-[240px] sm:min-h-[320px] max-h-[450px] bg-[#244855] flex items-center justify-center overflow-hidden border-b border-[#244855]/15">
               {post.mediaType === 'VIDEO' ? (
-                <video
-                  src={post.videoUrl || post.imageUrl}
-                  controls
-                  className="w-full max-h-[450px] object-contain"
-                />
-              ) : post.mediaType === 'IMAGE' ? (
-                <img
-                  src={post.imageUrl}
-                  alt={post.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : ['.mp4', '.webm', '.mov'].some(ext => (post.videoUrl || post.imageUrl || '').toLowerCase().includes(ext)) ? (
                 <video
                   src={post.videoUrl || post.imageUrl}
                   controls
@@ -304,31 +298,31 @@ export default function EmployeeTrackingPage({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="text-slate-400 text-xs">No Media Available</div>
+                <div className="text-white/60 text-xs">No Media Available</div>
               )}
             </div>
 
             {/* Post Details & Social Media Buttons */}
             <div className="p-6 sm:p-8 space-y-6">
-              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-[#244855] leading-snug">
                 {post.title}
               </h2>
 
               {/* Caption if present */}
               {post.caption && (
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center space-x-1">
-                    <AlignLeft className="h-3.5 w-3.5 text-cyan-600" />
+                <div className="p-4 rounded-xl bg-[#FFA896]/10 border border-[#244855]/10 space-y-1.5">
+                  <span className="text-[11px] font-bold text-[#E64833] uppercase tracking-wider flex items-center space-x-1">
+                    <AlignLeft className="h-3.5 w-3.5 text-[#E64833]" />
                     <span>Post Caption / Details</span>
                   </span>
-                  <p className="text-xs sm:text-sm text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#244855] font-medium whitespace-pre-wrap leading-relaxed">
                     {post.caption}
                   </p>
                 </div>
               )}
 
               <div className="space-y-3">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                   Open Post on Platforms:
                 </span>
                 <div className="flex flex-wrap gap-3">
@@ -388,14 +382,14 @@ export default function EmployeeTrackingPage({
 
         {/* Submission Success Banner */}
         {submitSuccess ? (
-          <div className="sit-card p-8 text-center space-y-4 border-emerald-200 bg-emerald-50/50">
+          <div className="sit-card p-8 text-center space-y-4 border-emerald-200 bg-emerald-50/50 rounded-2xl">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 border border-emerald-200">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900">
+            <h3 className="text-xl font-bold text-[#244855]">
               {isEditingExisting ? 'Submission Updated!' : 'Thank You! Submission Recorded.'}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+            <p className="text-xs sm:text-sm text-[#244855]/80 max-w-md mx-auto">
               Your engagement actions have been logged successfully for internal company tracking.
             </p>
             <button
@@ -410,9 +404,9 @@ export default function EmployeeTrackingPage({
           </div>
         ) : (
           /* Submission Form */
-          <form onSubmit={(e) => handleSubmit(e)} className="sit-card p-6 sm:p-8 space-y-6 shadow-md border-slate-200">
-            <div className="border-b border-slate-200 pb-4">
-              <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+          <form onSubmit={(e) => handleSubmit(e)} className="sit-card p-6 sm:p-8 space-y-6 shadow-soft border-[#244855]/15 bg-white rounded-2xl">
+            <div className="border-b border-[#244855]/10 pb-4">
+              <h3 className="text-base font-bold text-[#244855] flex items-center space-x-2">
                 <span>Employee Interaction Form</span>
                 {isEditingExisting && (
                   <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
@@ -420,13 +414,13 @@ export default function EmployeeTrackingPage({
                   </span>
                 )}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#244855]/70">
                 Please enter your full name, designation, and select all engagement actions completed.
               </p>
             </div>
 
             {error && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm font-medium flex items-center space-x-2">
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#9B1313] text-xs sm:text-sm font-medium flex items-center space-x-2">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -434,8 +428,8 @@ export default function EmployeeTrackingPage({
 
             {/* Full Name Field */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Full Name <span className="text-cyan-600">*</span>
+              <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider">
+                Full Name <span className="text-[#E64833]">*</span>
               </label>
               <input
                 type="text"
@@ -446,11 +440,11 @@ export default function EmployeeTrackingPage({
                 required
                 disabled={isEditingExisting}
               />
-              <p className="text-[11px] text-slate-500 font-medium">
+              <p className="text-[11px] text-[#244855]/70 font-medium">
                 Please enter your full name in CAPITAL LETTERS (Minimum 2 words). Auto-converts to UPPERCASE.
               </p>
               {nameError && (
-                <p className="text-xs font-semibold text-amber-600 flex items-center space-x-1">
+                <p className="text-xs font-semibold text-[#9B1313] flex items-center space-x-1">
                   <AlertCircle className="h-3.5 w-3.5" />
                   <span>{nameError}</span>
                 </p>
@@ -459,13 +453,13 @@ export default function EmployeeTrackingPage({
 
             {/* Designation Field */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Designation <span className="text-cyan-600">*</span>
+              <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider">
+                Designation <span className="text-[#E64833]">*</span>
               </label>
               <select
                 value={designationId}
                 onChange={(e) => setDesignationId(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl sit-input text-xs sm:text-sm font-medium bg-white text-slate-900"
+                className="w-full px-4 py-3 rounded-xl sit-input text-xs sm:text-sm font-medium bg-white text-[#244855]"
                 required
                 disabled={isEditingExisting}
               >
@@ -480,8 +474,8 @@ export default function EmployeeTrackingPage({
 
             {/* Platform Selection (Multi-select) */}
             <div className="space-y-3">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Platforms Interacted With <span className="text-cyan-600">*</span>
+              <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider">
+                Platforms Interacted With <span className="text-[#E64833]">*</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {['Facebook', 'Instagram', 'LinkedIn', 'X'].map((platform) => {
@@ -493,15 +487,15 @@ export default function EmployeeTrackingPage({
                       onClick={() => handlePlatformToggle(platform)}
                       className={`flex items-center justify-center space-x-2 p-3 rounded-xl border text-xs sm:text-sm font-bold transition-all ${
                         isSelected
-                          ? 'bg-cyan-50 text-cyan-800 border-cyan-400 shadow-sm'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          ? 'bg-[#FFA896]/20 text-[#244855] border-[#E64833] shadow-sm'
+                          : 'bg-[#FFF8F5] text-[#244855]/70 border-[#244855]/15 hover:bg-[#FFA896]/10'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => {}}
-                        className="rounded border-slate-300 text-cyan-600 h-4 w-4 pointer-events-none"
+                        className="rounded border-[#244855]/30 text-[#E64833] h-4 w-4 pointer-events-none"
                       />
                       <span>{platform}</span>
                     </button>
@@ -520,13 +514,13 @@ export default function EmployeeTrackingPage({
               return (
                 <div
                   key={platform}
-                  className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3 animate-fadeIn"
+                  className="p-5 rounded-xl bg-[#FFF8F5] border border-[#244855]/15 space-y-3 animate-fadeIn"
                 >
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-[#244855] uppercase tracking-wider">
                       {platform} Interactions
                     </h4>
-                    <span className="text-[11px] text-slate-500 font-mono">
+                    <span className="text-[11px] text-[#244855]/60 font-mono">
                       {selectedActions.length} selected
                     </span>
                   </div>
@@ -539,8 +533,8 @@ export default function EmployeeTrackingPage({
                           key={option}
                           className={`inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl border text-xs font-semibold cursor-pointer select-none transition-all ${
                             isChecked
-                              ? 'bg-white text-cyan-800 border-cyan-500 shadow-sm'
-                              : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                              ? 'bg-white text-[#244855] border-[#E64833] shadow-sm font-bold'
+                              : 'bg-white text-[#244855]/70 border-[#244855]/15 hover:border-[#244855]/30'
                           }`}
                         >
                           <input
@@ -552,7 +546,7 @@ export default function EmployeeTrackingPage({
                                 option
                               )
                             }
-                            className="rounded border-slate-300 text-cyan-600 h-4 w-4"
+                            className="rounded border-[#244855]/30 text-[#E64833] h-4 w-4"
                           />
                           <span>{option}</span>
                         </label>

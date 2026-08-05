@@ -8,13 +8,26 @@ export async function GET(
   try {
     const post = await prisma.post.findUnique({
       where: { trackingCode: params.code },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            logoUrl: true,
+          },
+        },
+      },
     });
 
     if (!post) {
       return NextResponse.json({ error: 'Invalid tracking link or post not found' }, { status: 404 });
     }
 
-    return NextResponse.json(post);
+    return NextResponse.json({
+      ...post,
+      organizationName: post.organization?.name || null,
+      organizationLogo: post.organization?.logoUrl || null,
+    });
   } catch (error) {
     console.error('Error fetching post by code:', error);
     return NextResponse.json({ error: 'Failed to fetch post' }, { status: 500 });

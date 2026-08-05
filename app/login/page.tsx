@@ -65,19 +65,19 @@ export default function UnifiedLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] flex items-center justify-center p-4 relative font-sans">
+    <div className="min-h-screen bg-[#FFF8F5] text-[#244855] flex items-center justify-center p-4 relative font-sans">
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <span className="text-xl font-extrabold text-[#212A31]">ClubHQ</span>
+            <span className="text-2xl font-extrabold text-[#244855]">ClubHQ</span>
           </Link>
-          <h1 className="text-2xl font-extrabold text-[#212A31]">Welcome Back</h1>
-          <p className="text-sm text-[#2E3944] mt-1 font-medium">Sign in to access your organization workspace.</p>
+          <h1 className="text-2xl font-extrabold text-[#244855]">Welcome Back</h1>
+          <p className="text-sm text-[#244855]/80 mt-1 font-medium">Sign in to access your organization workspace.</p>
         </div>
 
-        <div className="sit-card p-6 sm:p-8 bg-white border border-[#748D92] rounded-2xl shadow-soft">
+        <div className="sit-card p-6 sm:p-8 bg-white border border-[#244855]/15 rounded-2xl shadow-soft">
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-3 font-medium">
+            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-[#9B1313] text-xs font-medium flex items-center gap-3">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <span>{error}</span>
             </div>
@@ -85,49 +85,49 @@ export default function UnifiedLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-2">
                 Email Address *
               </label>
               <div className="relative">
-                <Mail className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#748D92]" />
+                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#244855]/40" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@company.com"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl sit-input text-sm font-medium"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl sit-input text-xs sm:text-sm font-medium"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider">
                   Password *
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-bold text-[#124E66] hover:underline"
+                  className="text-xs font-bold text-[#E64833] hover:underline"
                 >
                   Forgot Password?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#748D92]" />
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#244855]/40" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-11 py-3 rounded-xl sit-input text-sm font-medium"
+                  className="w-full pl-10 pr-10 py-3 rounded-xl sit-input text-xs sm:text-sm font-medium"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#748D92] hover:text-[#212A31]"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#244855]/40 hover:text-[#244855]"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -137,22 +137,22 @@ export default function UnifiedLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-3.5 text-sm flex items-center justify-center gap-2 shadow-md"
+              className="btn-primary w-full py-3.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md"
             >
               {loading ? 'Signing In...' : 'Sign In'} <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          <div className="mt-6 border-t border-[#748D92]/30 pt-4 text-center text-xs text-[#2E3944] space-y-2">
+          <div className="mt-6 border-t border-[#244855]/10 pt-4 text-center text-xs text-[#244855]/80 space-y-2">
             <p>
-              Don&apos;t have a member account?{' '}
-              <Link href="/signup" className="text-[#124E66] font-bold hover:underline">
-                Sign Up
+              Need to join an organization?{' '}
+              <Link href="/join-organization" className="text-[#E64833] font-bold hover:underline">
+                Join Organization
               </Link>
             </p>
             <p>
               Need an organization workspace?{' '}
-              <Link href="/register-organization" className="text-[#124E66] font-bold hover:underline">
+              <Link href="/register-organization" className="text-[#E64833] font-bold hover:underline">
                 Register Organization
               </Link>
             </p>

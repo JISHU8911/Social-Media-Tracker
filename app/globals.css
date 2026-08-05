@@ -4,75 +4,77 @@
 
 :root {
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  --bg-main: #D3D9D4;
-  --primary-dark: #212A31;
-  --secondary-dark: #2E3944;
-  --primary-accent: #124E66;
-  --muted: #748D92;
+  --bg-main: #FFF8F5;
+  --primary: #244855;
+  --accent: #E64833;
+  --accent-hover: #9B1313;
+  --danger: #9B1313;
+  --dark: #38000A;
   --card-bg: #FFFFFF;
+  --section-bg: rgba(255, 168, 150, 0.08);
 }
 
 html, body {
   font-family: var(--font-sans);
   background-color: var(--bg-main);
-  color: var(--primary-dark);
+  color: var(--primary);
   min-height: 100vh;
   max-width: 100vw;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Premium Enterprise Cards & Utility Styles */
+/* Modern SaaS Premium Cards */
 .sit-card {
   background-color: #ffffff;
-  border: 1px solid #748D92;
+  border: 1px solid rgba(36, 72, 85, 0.12);
   border-radius: 16px;
-  box-shadow: 0 4px 20px -2px rgba(33, 42, 49, 0.08), 0 2px 6px -1px rgba(33, 42, 49, 0.04);
+  box-shadow: 0 4px 20px -2px rgba(36, 72, 85, 0.05), 0 2px 6px -1px rgba(36, 72, 85, 0.02);
   transition: all 0.2s ease-in-out;
 }
 
 .sit-card-hover:hover {
-  box-shadow: 0 8px 24px -2px rgba(33, 42, 49, 0.12);
-  border-color: #212A31;
+  box-shadow: 0 8px 24px -2px rgba(36, 72, 85, 0.10);
+  border-color: rgba(36, 72, 85, 0.25);
 }
 
-/* Dashboard Stats Cards: White background, #124E66 top border, #212A31 icons */
+/* Dashboard Stats Cards */
 .sit-card-stat {
   background-color: #ffffff;
-  border-top: 4px solid #124E66;
-  border-left: 1px solid #748D92;
-  border-right: 1px solid #748D92;
-  border-bottom: 1px solid #748D92;
+  border-top: 4px solid #E64833;
+  border-left: 1px solid rgba(36, 72, 85, 0.12);
+  border-right: 1px solid rgba(36, 72, 85, 0.12);
+  border-bottom: 1px solid rgba(36, 72, 85, 0.12);
   border-radius: 16px;
-  box-shadow: 0 4px 20px -2px rgba(33, 42, 49, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(36, 72, 85, 0.05);
   transition: all 0.2s ease-in-out;
 }
 
 .sit-input {
   background-color: #ffffff;
-  border: 1px solid #748D92;
-  color: #212A31;
-  border-radius: 10px;
+  border: 1px solid rgba(36, 72, 85, 0.20);
+  color: #244855;
+  border-radius: 12px;
   transition: all 0.15s ease-in-out;
 }
 
 .sit-input:focus {
-  border-color: #124E66;
-  box-shadow: 0 0 0 3px rgba(18, 78, 102, 0.18);
+  border-color: #E64833;
+  box-shadow: 0 0 0 3px rgba(230, 72, 51, 0.15);
   outline: none;
 }
 
-/* Primary Button: Background #124E66, Hover #0E3E52, Text White */
+/* Primary Button: Background #E64833, Hover #9B1313, Text White */
 .btn-primary {
-  background-color: #124E66;
+  background-color: #E64833;
   color: #ffffff;
-  font-weight: 600;
-  border-radius: 10px;
+  font-weight: 700;
+  border-radius: 12px;
   transition: all 0.15s ease-in-out;
 }
 
 .btn-primary:hover {
-  background-color: #0E3E52;
+  background-color: #9B1313;
 }
 
 .btn-primary:disabled {
@@ -80,17 +82,17 @@ html, body {
   cursor: not-allowed;
 }
 
-/* Secondary Button: Background #212A31, Text White */
+/* Secondary Button: Background #244855, Hover #1C3843, Text White */
 .btn-secondary {
-  background-color: #212A31;
+  background-color: #244855;
   color: #ffffff;
-  font-weight: 600;
-  border-radius: 10px;
+  font-weight: 700;
+  border-radius: 12px;
   transition: all 0.15s ease-in-out;
 }
 
 .btn-secondary:hover {
-  background-color: #192026;
+  background-color: #1C3843;
 }
 
 .btn-secondary:disabled {
@@ -98,22 +100,48 @@ html, body {
   cursor: not-allowed;
 }
 
-/* Danger / Accent Button */
+/* Danger Button: Background #9B1313, Hover #38000A, Text White */
 .btn-danger {
-  background-color: #2E3944;
+  background-color: #9B1313;
   color: #ffffff;
-  font-weight: 600;
-  border-radius: 10px;
+  font-weight: 700;
+  border-radius: 12px;
   transition: all 0.15s ease-in-out;
 }
 
 .btn-danger:hover {
-  background-color: #242D36;
+  background-color: #38000A;
 }
 
-/* Table styling */
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Outline Button */
+.btn-outline {
+  background-color: #ffffff;
+  border: 1px solid rgba(36, 72, 85, 0.25);
+  color: #244855;
+  font-weight: 700;
+  border-radius: 12px;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-outline:hover {
+  background-color: rgba(255, 168, 150, 0.12);
+  border-color: #E64833;
+  color: #E64833;
+}
+
+/* Section Background Accent */
+.sit-section-bg {
+  background-color: rgba(255, 168, 150, 0.08);
+}
+
+/* Table Header */
 .sit-table-header {
-  background-color: #212A31;
+  background-color: #244855;
   color: #ffffff;
 }
 
@@ -123,12 +151,12 @@ html, body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #D3D9D4;
+  background: #FFF8F5;
 }
 ::-webkit-scrollbar-thumb {
-  background: #748D92;
+  background: rgba(36, 72, 85, 0.25);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #212A31;
+  background: #244855;
 }

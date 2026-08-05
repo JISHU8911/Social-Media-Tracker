@@ -86,22 +86,22 @@ export default function CreateNewPostPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
+    <div className="min-h-screen bg-[#FFF8F5] text-[#244855] font-sans">
       <Navbar />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.back()}
-            className="p-2.5 rounded-xl btn-secondary text-white"
+            className="p-2.5 rounded-xl btn-secondary text-[#244855]"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#244855] tracking-tight">
               Create New Campaign Post
             </h1>
-            <p className="text-xs sm:text-sm text-[#2E3944] font-medium">
+            <p className="text-xs sm:text-sm text-[#244855]/80 font-medium">
               Distribute social media content and assign tracking identifiers to your team.
             </p>
           </div>
@@ -109,20 +109,20 @@ export default function CreateNewPostPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center space-x-3 font-medium">
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-[#9B1313] text-sm flex items-center space-x-3 font-medium">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Section 1: Basic Information */}
-          <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-5 shadow-soft">
-            <h2 className="text-sm font-extrabold text-[#212A31] uppercase tracking-wider border-b border-[#748D92]/30 pb-3">
+          <div className="sit-card p-6 bg-white border border-[#244855]/15 rounded-2xl space-y-5 shadow-soft">
+            <h2 className="text-sm font-extrabold text-[#244855] uppercase tracking-wider border-b border-[#244855]/10 pb-3">
               1. Campaign Basics
             </h2>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider">
+              <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider">
                 Post Title *
               </label>
               <input
@@ -136,9 +136,9 @@ export default function CreateNewPostPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider flex items-center justify-between">
+              <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider flex items-center justify-between">
                 <span>Campaign Caption & Hashtags</span>
-                <span className="text-[10px] text-[#2E3944] font-normal lowercase">Optional</span>
+                <span className="text-[10px] text-[#244855]/60 font-normal lowercase">Optional</span>
               </label>
               <textarea
                 value={caption}
@@ -151,10 +151,10 @@ export default function CreateNewPostPage() {
           </div>
 
           {/* Section 2: Media Assets Upload */}
-          <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-5 shadow-soft">
-            <h2 className="text-sm font-extrabold text-[#212A31] uppercase tracking-wider border-b border-[#748D92]/30 pb-3 flex items-center justify-between">
+          <div className="sit-card p-6 bg-white border border-[#244855]/15 rounded-2xl space-y-5 shadow-soft">
+            <h2 className="text-sm font-extrabold text-[#244855] uppercase tracking-wider border-b border-[#244855]/10 pb-3 flex items-center justify-between">
               <span>2. Campaign Media Creative</span>
-              <span className="text-xs font-normal text-[#2E3944] font-mono">Image or Video</span>
+              <span className="text-xs font-normal text-[#244855]/70 font-mono">Image or Video</span>
             </h2>
 
             <MediaUploader
@@ -166,14 +166,14 @@ export default function CreateNewPostPage() {
           </div>
 
           {/* Section 3: Social Platform URLs */}
-          <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-5 shadow-soft">
-            <h2 className="text-sm font-extrabold text-[#212A31] uppercase tracking-wider border-b border-[#748D92]/30 pb-3">
+          <div className="sit-card p-6 bg-white border border-[#244855]/15 rounded-2xl space-y-5 shadow-soft">
+            <h2 className="text-sm font-extrabold text-[#244855] uppercase tracking-wider border-b border-[#244855]/10 pb-3">
               3. Social Media Target Links (At least 1 required)
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-1.5">
                   Facebook Post URL
                 </label>
                 <input
@@ -186,7 +186,7 @@ export default function CreateNewPostPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-1.5">
                   Instagram Post URL
                 </label>
                 <input
@@ -199,7 +199,7 @@ export default function CreateNewPostPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-1.5">
                   LinkedIn Post URL
                 </label>
                 <input
@@ -212,7 +212,7 @@ export default function CreateNewPostPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#212A31] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider mb-1.5">
                   X (Twitter) Post URL
                 </label>
                 <input

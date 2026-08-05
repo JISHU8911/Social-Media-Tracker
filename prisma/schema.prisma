@@ -20,6 +20,7 @@ model Organization {
   uniqueCode    String?                  @unique // e.g. "K8P2X9F4"
   name          String
   officialEmail String                   @unique
+  logoUrl       String?                  // Custom Organization Logo URL
   passwordHash  String?                  // Raw password hash stored during org signup before approval
   status        OrgStatus                @default(PENDING)
   createdAt     DateTime                 @default(now())

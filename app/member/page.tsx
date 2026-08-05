@@ -100,7 +100,7 @@ export default function MemberDashboardPage() {
   const hasOrganization = Boolean(user?.organizationId);
 
   return (
-    <div className="min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans">
+    <div className="min-h-screen bg-[#FFF8F5] text-[#244855] font-sans">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -108,25 +108,25 @@ export default function MemberDashboardPage() {
           /* NON-ORGANIZATION USER DASHBOARD VIEW */
           <div className="space-y-8">
             {/* Friendly Welcome Card */}
-            <div className="max-w-3xl mx-auto sit-card p-8 sm:p-10 bg-white border border-[#748D92] rounded-2xl shadow-soft text-center space-y-6">
-              <div className="w-16 h-16 bg-[#D3D9D4] border border-[#748D92] text-[#124E66] rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+            <div className="max-w-3xl mx-auto sit-card p-8 sm:p-10 bg-white border border-[#244855]/15 rounded-2xl shadow-soft text-center space-y-6">
+              <div className="w-16 h-16 bg-[#FFA896]/20 border border-[#244855]/10 text-[#E64833] rounded-2xl flex items-center justify-center mx-auto shadow-inner">
                 <Building2 className="w-8 h-8" />
               </div>
 
               <div className="space-y-2">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
-                  Welcome to ClubHQ
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
+                  Welcome to {user?.organizationName || 'ClubHQ'}
                 </h1>
-                <p className="text-sm font-medium text-[#2E3944] max-w-md mx-auto">
+                <p className="text-sm font-medium text-[#244855]/80 max-w-md mx-auto">
                   You are not currently part of any organization.
                 </p>
               </div>
 
-              <div className="sit-card p-6 bg-[#D3D9D4]/40 border border-[#748D92]/30 rounded-xl text-left max-w-lg mx-auto space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#212A31]">
+              <div className="sit-card p-6 bg-[#FFA896]/10 border border-[#244855]/10 rounded-xl text-left max-w-lg mx-auto space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#244855]">
                   Join an organization to:
                 </h3>
-                <ul className="space-y-2 text-xs font-medium text-[#212A31]">
+                <ul className="space-y-2 text-xs font-medium text-[#244855]">
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>View published posts</span>
@@ -160,83 +160,83 @@ export default function MemberDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                     Joined Organization
                   </span>
-                  <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                    <Building2 className="h-5 w-5 text-[#212A31]" />
+                  <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                    <Building2 className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-base sm:text-lg font-extrabold text-[#212A31] truncate">
+                <div className="text-base sm:text-lg font-extrabold text-[#244855] truncate">
                   Not Joined Yet
                 </div>
-                <p className="text-[11px] text-[#2E3944] font-medium">Optional collaboration access</p>
+                <p className="text-[11px] text-[#244855]/70 font-medium">Optional collaboration access</p>
               </div>
 
               <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                     Total Orgs Joined
                   </span>
-                  <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                    <Building className="h-5 w-5 text-[#212A31]" />
+                  <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                    <Building className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
                   0
                 </div>
-                <p className="text-[11px] text-[#2E3944] font-medium">Active memberships</p>
+                <p className="text-[11px] text-[#244855]/70 font-medium">Active memberships</p>
               </div>
 
               <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                     Total Interacted Posts
                   </span>
-                  <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                    <CheckCircle2 className="h-5 w-5 text-[#212A31]" />
+                  <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                    <CheckCircle2 className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
                   {history.length}
                 </div>
-                <p className="text-[11px] text-[#2E3944] font-medium">Logged interactions</p>
+                <p className="text-[11px] text-[#244855]/70 font-medium">Logged interactions</p>
               </div>
 
               <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                     Account Status
                   </span>
-                  <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                    <ShieldCheck className="h-5 w-5 text-[#212A31]" />
+                  <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                    <ShieldCheck className="h-5 w-5" />
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-emerald-800">
                   Active
                 </div>
-                <p className="text-[11px] text-[#2E3944] font-medium">Verified user account</p>
+                <p className="text-[11px] text-[#244855]/70 font-medium">Verified user account</p>
               </div>
             </div>
 
             {/* Quick Overview & Navigation Options */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
-                <h3 className="text-base font-extrabold text-[#212A31] flex items-center gap-2 border-b border-[#748D92]/30 pb-3">
-                  <UserCheck className="w-5 h-5 text-[#124E66]" /> User Profile Overview
+              <div className="sit-card p-6 bg-white border border-[#244855]/15 rounded-2xl space-y-4 shadow-soft">
+                <h3 className="text-base font-extrabold text-[#244855] flex items-center gap-2 border-b border-[#244855]/10 pb-3">
+                  <UserCheck className="w-5 h-5 text-[#E64833]" /> User Profile Overview
                 </h3>
                 <div className="space-y-3 text-xs">
-                  <div className="flex justify-between py-1.5 border-b border-[#748D92]/20">
-                    <span className="text-[#2E3944] font-bold">Account Name</span>
-                    <span className="font-extrabold text-[#212A31]">{user?.name}</span>
+                  <div className="flex justify-between py-1.5 border-b border-[#244855]/10">
+                    <span className="text-[#244855]/70 font-bold">Account Name</span>
+                    <span className="font-extrabold text-[#244855]">{user?.name}</span>
                   </div>
-                  <div className="flex justify-between py-1.5 border-b border-[#748D92]/20">
-                    <span className="text-[#2E3944] font-bold">Email Address</span>
-                    <span className="font-mono text-[#212A31] font-semibold">{user?.email}</span>
+                  <div className="flex justify-between py-1.5 border-b border-[#244855]/10">
+                    <span className="text-[#244855]/70 font-bold">Email Address</span>
+                    <span className="font-mono text-[#244855] font-semibold">{user?.email}</span>
                   </div>
                   <div className="flex justify-between py-1.5">
-                    <span className="text-[#2E3944] font-bold">Account Role</span>
-                    <span className="font-bold text-[#124E66]">{user?.role || 'USER'}</span>
+                    <span className="text-[#244855]/70 font-bold">Account Role</span>
+                    <span className="font-bold text-[#E64833]">{user?.role || 'USER'}</span>
                   </div>
                 </div>
                 <div className="pt-2">
@@ -249,11 +249,11 @@ export default function MemberDashboardPage() {
                 </div>
               </div>
 
-              <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft">
-                <h3 className="text-base font-extrabold text-[#212A31] flex items-center gap-2 border-b border-[#748D92]/30 pb-3">
-                  <Building2 className="w-5 h-5 text-[#124E66]" /> Unlock Organization Features
+              <div className="sit-card p-6 bg-white border border-[#244855]/15 rounded-2xl space-y-4 shadow-soft">
+                <h3 className="text-base font-extrabold text-[#244855] flex items-center gap-2 border-b border-[#244855]/10 pb-3">
+                  <Building2 className="w-5 h-5 text-[#E64833]" /> Unlock Organization Features
                 </h3>
-                <p className="text-xs text-[#2E3944] font-medium leading-relaxed">
+                <p className="text-xs text-[#244855]/80 font-medium leading-relaxed">
                   Joining an organization unlocks campaign content calendars, published organization posts, activity tracking forms, and team analytics reports.
                 </p>
                 <div className="pt-2">
@@ -272,14 +272,14 @@ export default function MemberDashboardPage() {
           <>
             {/* Header */}
             <div>
-              <div className="flex items-center space-x-2 text-xs font-bold text-[#124E66] mb-1">
+              <div className="flex items-center space-x-2 text-xs font-bold text-[#E64833] mb-1">
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>Member Workspace</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#212A31] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#244855] tracking-tight">
                 Member Dashboard
               </h1>
-              <p className="text-xs sm:text-sm text-[#2E3944] font-medium">
+              <p className="text-xs sm:text-sm text-[#244855]/80 font-medium">
                 Browse published organization posts and track your logged interaction proof.
               </p>
             </div>
@@ -288,65 +288,65 @@ export default function MemberDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                     Total Posts
                   </span>
-                  <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                    <FileText className="h-5 w-5 text-[#212A31]" />
+                  <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                    <FileText className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
                   {posts.length}
                 </div>
-                <p className="text-[11px] text-[#2E3944] font-medium">Published organization posts</p>
+                <p className="text-[11px] text-[#244855]/70 font-medium">Published organization posts</p>
               </div>
 
               <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                     Total Interacted Posts
                   </span>
-                  <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                    <CheckCircle2 className="h-5 w-5 text-[#212A31]" />
+                  <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                    <CheckCircle2 className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
                   {history.length}
                 </div>
-                <p className="text-[11px] text-[#2E3944] font-medium">Posts you have interacted with</p>
+                <p className="text-[11px] text-[#244855]/70 font-medium">Posts you have interacted with</p>
               </div>
 
               <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#2E3944] uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
                     Participation Status
                   </span>
-                  <div className="p-2 rounded-lg bg-[#D3D9D4] text-[#212A31]">
-                    <Activity className="h-5 w-5 text-[#212A31]" />
+                  <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
+                    <Activity className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#124E66]">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#E64833]">
                   {history.length > 0 ? 'ACTIVE' : 'READY'}
                 </div>
-                <p className="text-[11px] text-[#2E3944] font-medium">Organization Member Verified</p>
+                <p className="text-[11px] text-[#244855]/70 font-medium">Organization Member Verified</p>
               </div>
             </div>
 
             {/* Published Posts Grid */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-extrabold text-[#212A31]">Latest Organization Posts</h2>
-                <Link href="/member/posts" className="text-xs font-bold text-[#124E66] hover:underline flex items-center gap-1">
+                <h2 className="text-lg font-extrabold text-[#244855]">Latest Organization Posts</h2>
+                <Link href="/member/posts" className="text-xs font-bold text-[#E64833] hover:underline flex items-center gap-1">
                   View All Posts <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
 
               {loading ? (
-                <div className="sit-card p-12 text-center text-xs font-semibold text-[#2E3944]">
+                <div className="sit-card p-12 text-center text-xs font-semibold text-[#244855]">
                   Loading organization posts...
                 </div>
               ) : posts.length === 0 ? (
-                <div className="sit-card p-12 text-center text-xs font-semibold text-[#2E3944]">
+                <div className="sit-card p-12 text-center text-xs font-semibold text-[#244855]">
                   No campaign posts available yet.
                 </div>
               ) : (
@@ -354,25 +354,25 @@ export default function MemberDashboardPage() {
                   {posts.slice(0, 6).map((post) => (
                     <div
                       key={post.id}
-                      className="sit-card p-5 bg-white border border-[#748D92] rounded-2xl space-y-4 shadow-soft flex flex-col justify-between"
+                      className="sit-card p-5 bg-white border border-[#244855]/15 rounded-2xl space-y-4 shadow-soft flex flex-col justify-between"
                     >
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded bg-[#D3D9D4] text-[#212A31] border border-[#748D92]">
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FFA896]/20 text-[#244855] border border-[#244855]/10">
                             ID: {post.trackingCode}
                           </span>
-                          <span className="text-[10px] text-[#748D92] font-mono flex items-center gap-1">
+                          <span className="text-[10px] text-[#244855]/60 font-mono flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {new Date(post.createdAt).toLocaleDateString()}
                           </span>
                         </div>
 
-                        <h3 className="font-extrabold text-sm text-[#212A31] line-clamp-2">
+                        <h3 className="font-extrabold text-sm text-[#244855] line-clamp-2">
                           {post.title}
                         </h3>
                       </div>
 
-                      <div className="pt-3 border-t border-[#748D92]/30 flex items-center justify-between">
+                      <div className="pt-3 border-t border-[#244855]/10 flex items-center justify-between">
                         <Link
                           href={`/post/${post.trackingCode}`}
                           className="btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm"

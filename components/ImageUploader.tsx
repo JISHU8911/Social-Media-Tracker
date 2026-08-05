@@ -63,7 +63,18 @@ export default function ImageUploader({ value, onChange }: ImageUploaderProps) {
       clearInterval(progressInterval);
       setProgress(100);
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Server returned non-JSON:', text);
+        if (res.status === 413 || text.includes('Request Entity Too Large')) {
+          throw new Error('Image size exceeds server upload limit (Request Entity Too Large). Maximum image size is 10 MB.');
+        }
+        throw new Error(`Upload failed (HTTP ${res.status}): ${text || 'Non-JSON server response'}`);
+      }
+
       if (!res.ok) {
         throw new Error(data.error || 'Upload failed');
       }

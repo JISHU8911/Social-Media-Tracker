@@ -14,9 +14,13 @@ export async function POST(request: Request) {
   try {
     formData = await request.formData();
   } catch (err: any) {
-    console.error('Error parsing multipart form data payload:', err);
+    console.error('[MEDIA UPLOAD ROUTE ERROR] Failed to parse multipart form data payload:', err);
+    console.log('==================================================\n');
     return NextResponse.json(
-      { error: 'Failed to read upload payload. File size may exceed maximum server limit.' },
+      {
+        error:
+          'Request Entity Too Large. File size exceeds maximum server upload limit (Max 100 MB for video, 10 MB for image).',
+      },
       { status: 413 }
     );
   }
@@ -25,7 +29,8 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File | null;
 
     if (!file) {
-      console.error('No file payload found in form data');
+      console.error('[MEDIA UPLOAD ROUTE ERROR] No file payload found in form data');
+      console.log('==================================================\n');
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
@@ -35,10 +40,10 @@ export async function POST(request: Request) {
       file.type.startsWith('video/') ||
       ['.mp4', '.mov', '.webm'].some((ext) => file.name.toLowerCase().endsWith(ext));
 
-    console.log(`File Name: ${file.name}`);
-    console.log(`File Size: ${fileSizeMb} MB (${file.size} bytes)`);
-    console.log(`MIME Type: ${file.type || 'unknown'}`);
-    console.log(`Detected Category: ${isVideo ? 'VIDEO' : 'IMAGE'}`);
+    console.log(`[UPLOAD DETAILS] File Name: ${file.name}`);
+    console.log(`[UPLOAD DETAILS] File Size: ${fileSizeMb} MB (${file.size} bytes)`);
+    console.log(`[UPLOAD DETAILS] MIME Type: ${file.type || 'unknown'}`);
+    console.log(`[UPLOAD DETAILS] Detected Category: ${isVideo ? 'VIDEO' : 'IMAGE'}`);
 
     const maxImageSize = 10 * 1024 * 1024; // 10MB
     const maxVideoSize = 100 * 1024 * 1024; // 100MB
@@ -48,8 +53,9 @@ export async function POST(request: Request) {
       const errMessage = isVideo
         ? `Video size (${fileSizeMb} MB) exceeds maximum limit of 100 MB`
         : `Image size (${fileSizeMb} MB) exceeds maximum limit of 10 MB`;
-      console.error(errMessage);
-      return NextResponse.json({ error: errMessage }, { status: 400 });
+      console.error(`[MEDIA UPLOAD ROUTE ERROR] ${errMessage}`);
+      console.log('==================================================\n');
+      return NextResponse.json({ error: errMessage }, { status: 413 });
     }
 
     const allowedImageMime = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -61,7 +67,10 @@ export async function POST(request: Request) {
     const isValidVideo = allowedVideoMime.includes(file.type) || allowedVideoExt.includes(fileExt);
 
     if (!isValidImage && !isValidVideo) {
-      console.error(`Invalid format for file ${file.name} (MIME: ${file.type}, Ext: ${fileExt})`);
+      console.error(
+        `[MEDIA UPLOAD ROUTE ERROR] Invalid format for file ${file.name} (MIME: ${file.type}, Ext: ${fileExt})`
+      );
+      console.log('==================================================\n');
       return NextResponse.json(
         {
           error:
@@ -78,16 +87,25 @@ export async function POST(request: Request) {
       .replace(/[^a-zA-Z0-9_-]/g, '_');
     const filename = `${Date.now()}_${safeBaseName}${ext}`;
 
+    // Determine correct content type for Vercel Blob storage
+    let contentType = file.type;
+    if (!contentType || contentType === 'application/octet-stream') {
+      if (ext === '.mp4') contentType = 'video/mp4';
+      else if (ext === '.mov') contentType = 'video/quicktime';
+      else if (ext === '.webm') contentType = 'video/webm';
+      else contentType = mediaType === 'VIDEO' ? 'video/mp4' : 'image/jpeg';
+    }
+
     // 1. Vercel Blob Storage
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
-        console.log('Attempting Vercel Blob upload...');
+        console.log(`[VERCEL BLOB] Attempting upload for ${filename} (MIME: ${contentType})...`);
         const blob = await put(`uploads/${filename}`, file, {
           access: 'public',
-          contentType: file.type || (mediaType === 'VIDEO' ? 'video/mp4' : 'image/jpeg'),
+          contentType,
         });
 
-        console.log('Vercel Blob Upload Successful:', blob.url);
+        console.log('[VERCEL BLOB SUCCESS] URL:', blob.url);
         console.log('==================================================\n');
         return NextResponse.json({
           message: 'Upload successful',
@@ -96,12 +114,17 @@ export async function POST(request: Request) {
           mediaType,
         });
       } catch (blobError: any) {
-        console.error('Vercel Blob Upload Error:', blobError);
+        console.error('[VERCEL BLOB UPLOAD ERROR] Failed to upload to Vercel Blob:', blobError?.message || blobError);
+        if (blobError?.stack) {
+          console.error(blobError.stack);
+        }
       }
+    } else {
+      console.log('[VERCEL BLOB] BLOB_READ_WRITE_TOKEN is not set. Skipping Vercel Blob upload.');
     }
 
     // 2. Local Filesystem Fallback
-    console.log('Using Local Filesystem fallback upload...');
+    console.log('[LOCAL STORAGE] Using Local Filesystem fallback upload...');
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -117,7 +140,7 @@ export async function POST(request: Request) {
 
     const publicUrl = `/uploads/${filename}`;
 
-    console.log('Local Filesystem Upload Successful:', publicUrl);
+    console.log('[LOCAL STORAGE SUCCESS] Saved to:', publicUrl);
     console.log('==================================================\n');
 
     return NextResponse.json({
@@ -127,7 +150,10 @@ export async function POST(request: Request) {
       mediaType,
     });
   } catch (error: any) {
-    console.error('Unhandled File Upload Error:', error);
+    console.error('[MEDIA UPLOAD ROUTE UNHANDLED ERROR]:', error?.message || error);
+    if (error?.stack) {
+      console.error(error.stack);
+    }
     console.log('==================================================\n');
     return NextResponse.json(
       { error: error?.message || 'Failed to process file upload' },
@@ -135,3 +161,4 @@ export async function POST(request: Request) {
     );
   }
 }
+
