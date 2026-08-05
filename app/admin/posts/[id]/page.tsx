@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import WhatsAppModal from '@/components/WhatsAppModal';
+import WhatsAppReminderModal from '@/components/WhatsAppReminderModal';
 import * as XLSX from 'xlsx';
 import {
   ArrowLeft,
@@ -66,8 +67,9 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
   const [selectedDesignationFilter, setSelectedDesignationFilter] = useState('');
   const [selectedDateFilter, setSelectedDateFilter] = useState('');
 
-  // WhatsApp modal state
+  // WhatsApp modal states
   const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
+  const [whatsAppReminderOpen, setWhatsAppReminderOpen] = useState(false);
 
   // Edit Submission Modal state
   const [editingSubmission, setEditingSubmission] = useState<SubmissionItem | null>(null);
@@ -139,7 +141,7 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
   };
 
   const handleDeleteSubmission = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this employee submission?')) return;
+    if (!confirm('Are you sure you want to delete this member submission?')) return;
 
     try {
       const res = await fetch(`/api/submissions/${id}`, { method: 'DELETE' });
@@ -178,7 +180,7 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
       const xArr: string[] = sub.xActions ? JSON.parse(sub.xActions) : [];
 
       return {
-        'Employee Name': sub.fullName,
+        'Member Name': sub.fullName,
         'Designation': sub.designation?.designationName || '-',
         'Facebook Actions': fbArr.length > 0 ? fbArr.join(', ') : '-',
         'Instagram Actions': igArr.length > 0 ? igArr.join(', ') : '-',
@@ -254,12 +256,21 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => setWhatsAppReminderOpen(true)}
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-md transition-all"
+              title="Generate WhatsApp Reminder"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>Share to WhatsApp</span>
+            </button>
+
             <button
               onClick={() => setWhatsAppModalOpen(true)}
               className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs sm:text-sm font-semibold transition-all"
             >
-              <MessageSquare className="h-4 w-4" />
+              <MessageSquare className="h-4 w-4 text-emerald-600" />
               <span>WhatsApp Broadcast</span>
             </button>
 
@@ -378,13 +389,13 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-                <span>Employee Submissions</span>
+                <span>Member Submissions</span>
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200">
                   {filteredSubmissions.length} Total
                 </span>
               </h3>
               <p className="text-xs text-slate-500">
-                Detailed platform engagement actions per employee.
+                Detailed platform engagement actions per member.
               </p>
             </div>
 
@@ -533,12 +544,27 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
         </div>
       </main>
 
-      {/* WhatsApp Modal */}
+      {/* WhatsApp Broadcast Modal */}
       {whatsAppModalOpen && (
         <WhatsAppModal
           post={post}
           isOpen={whatsAppModalOpen}
           onClose={() => setWhatsAppModalOpen(false)}
+        />
+      )}
+
+      {/* WhatsApp Reminder Modal */}
+      {whatsAppReminderOpen && (
+        <WhatsAppReminderModal
+          data={{
+            title: post.title,
+            targetTime: new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            creativeUrl: post.imageUrl || post.videoUrl,
+            hasMedia: Boolean(post.imageUrl || post.videoUrl),
+            caption: post.caption,
+          }}
+          isOpen={whatsAppReminderOpen}
+          onClose={() => setWhatsAppReminderOpen(false)}
         />
       )}
 

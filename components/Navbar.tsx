@@ -118,25 +118,25 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Title */}
-          <div className="flex items-center space-x-3">
-            <Link href="/" className="flex items-center space-x-2.5 group">
+          <div className="flex items-center space-x-3 min-w-0 flex-shrink pr-2">
+            <Link href="/" className="flex items-center space-x-2.5 group min-w-0" title={brandName}>
               {logoUrl ? (
                 <img
                   src={logoUrl}
                   alt={brandName}
-                  className="h-8 w-8 object-contain rounded-lg bg-white/10 p-0.5 border border-white/10"
+                  className="h-8 w-8 object-contain rounded-lg bg-white/10 p-0.5 border border-white/10 flex-shrink-0"
                 />
               ) : (
-                <Building2 className="h-5 w-5 text-[#E64833]" />
+                <Building2 className="h-5 w-5 text-[#E64833] flex-shrink-0" />
               )}
-              <span className="text-lg font-extrabold text-white tracking-tight">
+              <span className="text-base sm:text-lg font-extrabold text-white tracking-tight truncate max-w-[140px] sm:max-w-[180px] md:max-w-[220px] lg:max-w-[240px] xl:max-w-[320px]">
                 {brandName}
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center space-x-1">
+          <nav className="hidden lg:flex items-center space-x-1 flex-shrink-0">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -158,11 +158,11 @@ export default function Navbar() {
           </nav>
 
           {/* Actions & Profile */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
             {isOrgAdminUser && (
               <Link
                 href="/admin/posts/new"
-                className="hidden sm:inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold btn-primary shadow-sm"
+                className="hidden sm:inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold btn-primary shadow-sm flex-shrink-0"
               >
                 <PlusCircle className="h-4 w-4" />
                 <span>Create Post</span>
@@ -170,10 +170,10 @@ export default function Navbar() {
             )}
 
             {user ? (
-              <div className="flex items-center space-x-2.5 pl-2 sm:pl-3 border-l border-white/15">
-                <div className="hidden sm:flex flex-col items-end">
-                  <span className="text-xs font-bold text-white max-w-[130px] truncate">{user.name}</span>
-                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/15 text-white uppercase tracking-wider">
+              <div className="flex items-center space-x-2.5 pl-2 sm:pl-3 border-l border-white/15 flex-shrink-0">
+                <div className="hidden sm:flex flex-col items-end flex-shrink-0">
+                  <span className="text-xs font-bold text-white max-w-[130px] truncate" title={user.name}>{user.name}</span>
+                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/15 text-white uppercase tracking-wider whitespace-nowrap flex-shrink-0">
                     {user.role}
                   </span>
                 </div>

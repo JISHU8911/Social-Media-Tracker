@@ -207,7 +207,7 @@ export default function LandingPage() {
               1
             </div>
             <h3 className="text-sm font-extrabold text-[#244855] mb-1">Plan & Schedule</h3>
-            <p className="text-xs text-[#244855]/80 font-medium">Social & graphics teams schedule campaign creatives.</p>
+            <p className="text-xs text-[#244855]/80 font-medium">Social & graphics teams schedule campaign media.</p>
           </div>
 
           <div className="sit-card p-6 bg-white border border-[#244855]/15 text-center rounded-2xl shadow-soft">

@@ -273,7 +273,7 @@ export default function EmployeeTrackingPage({
             <span>{post?.organizationName || 'ClubHQ'}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#244855] tracking-tight">
-            {post?.organizationName ? `${post.organizationName} Engagement Portal` : 'Employee Engagement Portal'}
+            {post?.organizationName ? `${post.organizationName} Engagement Portal` : 'Member Engagement Portal'}
           </h1>
           <p className="text-xs sm:text-sm text-[#244855]/80 font-medium max-w-lg mx-auto">
             Review organization social media post details below, interact on your platforms, and log your engagement actions.
@@ -407,7 +407,7 @@ export default function EmployeeTrackingPage({
           <form onSubmit={(e) => handleSubmit(e)} className="sit-card p-6 sm:p-8 space-y-6 shadow-soft border-[#244855]/15 bg-white rounded-2xl">
             <div className="border-b border-[#244855]/10 pb-4">
               <h3 className="text-base font-bold text-[#244855] flex items-center space-x-2">
-                <span>Employee Interaction Form</span>
+                <span>Member Interaction Form</span>
                 {isEditingExisting && (
                   <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
                     Editing Mode

@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
               Dashboard Overview
             </h1>
             <p className="text-xs sm:text-sm text-[#244855]/80 font-medium">
-              Employee social media engagement metrics and active post performance.
+              Member social media engagement metrics and active post performance.
             </p>
           </div>
 
@@ -157,14 +157,14 @@ export default function AdminDashboardPage() {
             <div className="text-2xl sm:text-3xl font-extrabold text-[#244855]">
               {summary ? summary.totalSubmissions : 0}
             </div>
-            <p className="text-[11px] text-[#244855]/70 font-medium">Recorded employee responses</p>
+            <p className="text-[11px] text-[#244855]/70 font-medium">Recorded member responses</p>
           </div>
 
-          {/* Participated Employees */}
+          {/* Participated Members */}
           <div className="sit-card-stat p-5 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#244855]/70 uppercase tracking-wider">
-                Participated Employees
+                Participated Members
               </span>
               <div className="p-2 rounded-xl bg-[#FFA896]/20 text-[#E64833]">
                 <Users className="h-5 w-5" />
@@ -225,7 +225,7 @@ export default function AdminDashboardPage() {
               <div className="sit-card p-12 text-center space-y-3">
                 <FileText className="h-10 w-10 text-[#244855]/40 mx-auto" />
                 <h3 className="text-sm font-bold text-[#244855]">No Campaign Posts Found</h3>
-                <p className="text-xs text-[#244855]/80">Create your first post to start tracking employee social interaction.</p>
+                <p className="text-xs text-[#244855]/80">Create your first post to start tracking member social interaction.</p>
                 <Link href="/admin/posts/new" className="btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs">
                   <PlusCircle className="h-4 w-4" /> Create Post
                 </Link>
@@ -235,7 +235,7 @@ export default function AdminDashboardPage() {
                 {filteredPosts.slice(0, 6).map((post) => (
                   <div
                     key={post.id}
-                    className="sit-card p-5 bg-white border border-[#244855]/15 rounded-2xl space-y-4 hover:border-[#244855]/40 transition-all flex flex-col justify-between"
+                    className="sit-card p-5 bg-[#FFFFFF] border border-[#244855]/15 rounded-2xl space-y-4 hover:border-[#244855]/40 transition-all flex flex-col justify-between"
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -279,7 +279,7 @@ export default function AdminDashboardPage() {
             <div>
               <h2 className="text-lg font-extrabold text-[#244855]">Recent Activity</h2>
               <p className="text-xs text-[#244855]/80 font-medium">
-                Live employee engagement logging feed.
+                Live member engagement logging feed.
               </p>
             </div>
 

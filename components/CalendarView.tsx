@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import MediaUploader from './MediaUploader';
+import WhatsAppReminderModal, { WhatsAppReminderData } from './WhatsAppReminderModal';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -27,6 +28,8 @@ import {
   Building2,
   FileText,
   AlignLeft,
+  Download,
+  MessageSquare,
 } from 'lucide-react';
 
 export interface CalendarEntryData {
@@ -86,6 +89,44 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
   const [selectedEntry, setSelectedEntry] = useState<CalendarEntryData | null>(null);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+  const [reminderData, setReminderData] = useState<WhatsAppReminderData | null>(null);
+
+  // Download Media Handler
+  const handleDownloadMedia = async (url: string, title?: string) => {
+    if (!url) return;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch file');
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      let ext = url.split('.').pop()?.split('?')[0] || '';
+      if (!ext || ext.length > 5) {
+        if (blob.type.includes('png')) ext = 'png';
+        else if (blob.type.includes('jpeg') || blob.type.includes('jpg')) ext = 'jpg';
+        else if (blob.type.includes('webp')) ext = 'webp';
+        else if (blob.type.includes('mp4')) ext = 'mp4';
+        else if (blob.type.includes('quicktime') || blob.type.includes('mov')) ext = 'mov';
+        else if (blob.type.includes('webm')) ext = 'webm';
+        else ext = 'media';
+      }
+
+      const cleanTitle = (title || 'creative').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileName = `${cleanTitle}.${ext}`;
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.warn('Direct download failed, opening media in new tab:', err);
+      window.open(url, '_blank');
+    }
+  };
 
   // Form states for Creation
   const [newTitle, setNewTitle] = useState('');
@@ -453,8 +494,14 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
 
       {/* Month View Grid */}
       <div className="sit-card bg-white border border-[#244855]/15 rounded-2xl overflow-hidden shadow-soft">
-        <div className="grid grid-cols-7 border-b border-white/10 bg-[#244855] text-white text-center text-xs font-extrabold py-3 uppercase tracking-wider">
-          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        <div className="grid grid-cols-7 border-b border-white/10 bg-[#244855] text-white text-center text-[10px] sm:text-xs font-extrabold py-2.5 sm:py-3 uppercase tracking-wider">
+          <div><span className="hidden sm:inline">Sun</span><span className="sm:hidden">S</span></div>
+          <div><span className="hidden sm:inline">Mon</span><span className="sm:hidden">M</span></div>
+          <div><span className="hidden sm:inline">Tue</span><span className="sm:hidden">T</span></div>
+          <div><span className="hidden sm:inline">Wed</span><span className="sm:hidden">W</span></div>
+          <div><span className="hidden sm:inline">Thu</span><span className="sm:hidden">T</span></div>
+          <div><span className="hidden sm:inline">Fri</span><span className="sm:hidden">F</span></div>
+          <div><span className="hidden sm:inline">Sat</span><span className="sm:hidden">S</span></div>
         </div>
 
         <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-[#244855]/10 bg-white">
@@ -469,13 +516,13 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
             return (
               <div
                 key={idx}
-                className={`min-h-[110px] p-2 transition-all ${
+                className={`min-h-[58px] sm:min-h-[110px] p-1 sm:p-2 transition-all flex flex-col justify-start ${
                   day.isCurrentMonth ? 'bg-white' : 'bg-[#FFA896]/5 text-slate-400'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center justify-between mb-1 sm:mb-1.5">
                   <span
-                    className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-extrabold ${
+                    className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[10px] sm:text-xs font-extrabold ${
                       isToday
                         ? 'bg-[#E64833] text-white shadow-sm'
                         : day.isCurrentMonth
@@ -486,13 +533,46 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                     {day.date.getDate()}
                   </span>
                   {dayEntries.length > 0 && (
-                    <span className="text-[10px] font-bold text-[#244855]/70">
+                    <span className="hidden sm:inline-block text-[10px] font-bold text-[#244855]/70">
                       {dayEntries.length} {dayEntries.length === 1 ? 'item' : 'items'}
                     </span>
                   )}
                 </div>
 
-                <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+                {/* Mobile View: Compact Event Pill + "+X more" */}
+                <div className="sm:hidden space-y-1">
+                  {dayEntries.slice(0, 1).map((entry) => (
+                    <div
+                      key={entry.id}
+                      onClick={() => {
+                        setSelectedEntry(entry);
+                        setIsDetailModalOpen(true);
+                      }}
+                      className={`p-1 rounded text-[9px] cursor-pointer bg-white border border-[#244855]/15 shadow-2xs truncate ${getStatusBorderColor(
+                        entry.status
+                      )}`}
+                      title={entry.title}
+                    >
+                      <span className="font-extrabold text-[#244855] truncate block leading-tight">
+                        {entry.title}
+                      </span>
+                    </div>
+                  ))}
+                  {dayEntries.length > 1 && (
+                    <button
+                      onClick={() => {
+                        setSelectedEntry(dayEntries[0]);
+                        setIsDetailModalOpen(true);
+                      }}
+                      className="w-full text-left text-[8px] font-bold text-[#E64833] bg-[#E64833]/10 px-1 py-0.5 rounded truncate"
+                    >
+                      +{dayEntries.length - 1} more
+                    </button>
+                  )}
+                </div>
+
+                {/* Desktop View: Full Event Cards */}
+                <div className="hidden sm:block space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
                   {dayEntries.map((entry) => (
                     <div
                       key={entry.id}
@@ -762,7 +842,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                 <div className="space-y-3 pt-2 border-t border-[#748D92]/30">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-[#212A31] uppercase tracking-wider flex items-center justify-between">
-                      <span>Graphics Team: Upload Creative</span>
+                      <span>Graphics Team: Upload Media</span>
                     </label>
                     <MediaUploader
                       value={creativeUrl}
@@ -954,13 +1034,13 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                 selectedEntry.status === 'POSTER_READY' && selectedEntry.creativeUrl && (
                   <div className="space-y-2">
                     <h4 className="text-xs font-bold text-[#212A31] uppercase tracking-wider">
-                      Completed Creative Preview (Admin Only)
+                      Completed Media Preview (Admin Only)
                     </h4>
                     <div className="rounded-xl overflow-hidden bg-slate-900 border border-[#748D92] min-h-[180px] flex items-center justify-center">
                       {selectedEntry.creativeType === 'VIDEO' ? (
                         <video src={selectedEntry.creativeUrl} controls className="w-full max-h-[300px]" />
                       ) : (
-                        <img src={selectedEntry.creativeUrl} alt="Poster Creative" className="w-full object-cover max-h-[300px]" />
+                        <img src={selectedEntry.creativeUrl} alt="Poster Media" className="w-full object-cover max-h-[300px]" />
                       )}
                     </div>
                   </div>
@@ -1005,27 +1085,67 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
                 </div>
               )}
 
-              {/* FIX 2 & FIX 3: Clean button text "Update Status", calls openStatusModal which closes details modal */}
+              {/* Admin Actions Bar */}
               {canManage && (
-                <div className="pt-4 flex items-center justify-between border-t border-[#748D92]/30">
+                <div className="pt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[#748D92]/30">
                   <button
                     onClick={() => handleDeleteEntry(selectedEntry.id, selectedEntry.title)}
-                    className="px-3 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 text-xs font-semibold flex items-center gap-1"
+                    className="px-3 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 text-xs font-semibold flex items-center gap-1 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" /> Delete Entry
                   </button>
 
-                  <button
-                    onClick={() => openStatusModal(selectedEntry)}
-                    className="px-4 py-2 rounded-xl btn-primary text-xs font-bold"
-                  >
-                    Update Status
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {selectedEntry.creativeUrl && (
+                      <button
+                        onClick={() => handleDownloadMedia(selectedEntry.creativeUrl!, selectedEntry.title)}
+                        className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 border border-slate-300 transition-colors"
+                        title="Download uploaded media file"
+                      >
+                        <Download className="w-4 h-4 text-[#124E66]" /> Download Media
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setReminderData({
+                          title: selectedEntry.title,
+                          targetTime: selectedEntry.targetTime,
+                          creativeUrl: selectedEntry.creativeUrl,
+                          caption: selectedEntry.caption,
+                        });
+                        setIsReminderModalOpen(true);
+                      }}
+                      className="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                      title="Generate WhatsApp Reminder"
+                    >
+                      <MessageSquare className="w-4 h-4 text-[#25D366]" /> Share to WhatsApp
+                    </button>
+
+                    <button
+                      onClick={() => openStatusModal(selectedEntry)}
+                      className="px-4 py-2 rounded-xl btn-primary text-xs font-bold"
+                    >
+                      Update Status
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           </div>
         </div>
+      )}
+
+      {/* WHATSAPP REMINDER MODAL */}
+      {isReminderModalOpen && reminderData && (
+        <WhatsAppReminderModal
+          data={reminderData}
+          isOpen={isReminderModalOpen}
+          onClose={() => {
+            setIsReminderModalOpen(false);
+            setReminderData(null);
+          }}
+        />
       )}
     </div>
   );

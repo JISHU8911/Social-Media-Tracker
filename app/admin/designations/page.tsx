@@ -146,7 +146,7 @@ export default function DesignationsManagementPage() {
             Designation Management
           </h1>
           <p className="text-xs sm:text-sm text-[#2E3944] font-medium">
-            Configure employee job titles and designations used for interaction tracking.
+            Configure member job titles and designations used for interaction tracking.
           </p>
         </div>
 

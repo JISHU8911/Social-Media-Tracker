@@ -153,7 +153,7 @@ export default function CreateNewPostPage() {
           {/* Section 2: Media Assets Upload */}
           <div className="sit-card p-6 bg-white border border-[#244855]/15 rounded-2xl space-y-5 shadow-soft">
             <h2 className="text-sm font-extrabold text-[#244855] uppercase tracking-wider border-b border-[#244855]/10 pb-3 flex items-center justify-between">
-              <span>2. Campaign Media Creative</span>
+              <span>2. Campaign Media</span>
               <span className="text-xs font-normal text-[#244855]/70 font-mono">Image or Video</span>
             </h2>
 

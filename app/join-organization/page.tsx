@@ -59,6 +59,12 @@ export default function JoinOrganizationPage() {
   const [verifyingOrg, setVerifyingOrg] = useState(false);
   const [alreadySentAlert, setAlreadySentAlert] = useState<string | null>(null);
 
+  // Dynamic Designations State
+  const [availableDesignations, setAvailableDesignations] = useState<DesignationItem[]>([]);
+  const [fetchingDesignations, setFetchingDesignations] = useState(false);
+  const [orgIdChecked, setOrgIdChecked] = useState(false);
+  const [designationSearch, setDesignationSearch] = useState('');
+
   const [verifiedOrg, setVerifiedOrg] = useState<{
     organizationId: string;
     organizationName: string;
@@ -69,6 +75,43 @@ export default function JoinOrganizationPage() {
 
   const [selectedDesignationId, setSelectedDesignationId] = useState('');
   const [submittingJoin, setSubmittingJoin] = useState(false);
+
+  // Auto-fetch designations when Organization ID changes
+  useEffect(() => {
+    if (!orgIdInput.trim()) {
+      setAvailableDesignations([]);
+      setSelectedDesignationId('');
+      setOrgIdChecked(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setFetchingDesignations(true);
+      try {
+        const res = await fetch(`/api/organizations/designations?orgId=${encodeURIComponent(orgIdInput.trim())}`);
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.designations)) {
+          setAvailableDesignations(data.designations);
+          setOrgIdChecked(true);
+          if (data.designations.length > 0) {
+            setSelectedDesignationId(data.designations[0].id);
+          } else {
+            setSelectedDesignationId('');
+          }
+        } else {
+          setAvailableDesignations([]);
+          setOrgIdChecked(false);
+        }
+      } catch {
+        setAvailableDesignations([]);
+        setOrgIdChecked(false);
+      } finally {
+        setFetchingDesignations(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [orgIdInput]);
 
   useEffect(() => {
     fetchSessionAndRequests();
@@ -517,6 +560,59 @@ export default function JoinOrganizationPage() {
                     className="w-full px-4 py-3 rounded-xl sit-input font-mono text-sm uppercase"
                   />
                 </div>
+              </div>
+
+              {/* Dynamic Designation Selection Section */}
+              <div className="space-y-2 pt-2">
+                <label className="block text-xs font-bold text-[#244855] uppercase tracking-wider">
+                  Select Designation *
+                </label>
+
+                {fetchingDesignations ? (
+                  <div className="p-3.5 rounded-xl bg-[#FFA896]/10 border border-[#244855]/15 text-xs text-[#244855] font-medium flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin text-[#E64833]" />
+                    <span>Fetching available designations for {orgIdInput}...</span>
+                  </div>
+                ) : orgIdChecked && availableDesignations.length === 0 ? (
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center gap-2.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>No designations available. Please contact your organization administrator.</span>
+                  </div>
+                ) : availableDesignations.length > 0 ? (
+                  <div className="space-y-2">
+                    {/* Searchable input filter */}
+                    {availableDesignations.length > 3 && (
+                      <input
+                        type="text"
+                        value={designationSearch}
+                        onChange={(e) => setDesignationSearch(e.target.value)}
+                        placeholder="Search designation..."
+                        className="w-full px-3.5 py-2 rounded-xl sit-input text-xs font-medium bg-white"
+                      />
+                    )}
+
+                    <select
+                      value={selectedDesignationId}
+                      onChange={(e) => setSelectedDesignationId(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 rounded-xl sit-input text-xs font-semibold bg-white text-[#244855]"
+                    >
+                      {availableDesignations
+                        .filter((d) =>
+                          d.designationName.toLowerCase().includes(designationSearch.toLowerCase())
+                        )
+                        .map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.designationName}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 font-medium">
+                    Enter a valid Organization ID above to load available designations.
+                  </div>
+                )}
               </div>
             </div>
 

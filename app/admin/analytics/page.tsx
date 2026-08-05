@@ -117,7 +117,7 @@ export default function AnalyticsDashboardPage() {
             <div className="text-2xl sm:text-3xl font-extrabold text-[#212A31]">
               {summary.totalSubmissions}
             </div>
-            <span className="text-[10px] text-[#748D92] font-semibold">Logged Employee Responses</span>
+            <span className="text-[10px] text-[#748D92] font-semibold">Logged Member Responses</span>
           </div>
 
           <div className="sit-card-stat p-5 space-y-1">

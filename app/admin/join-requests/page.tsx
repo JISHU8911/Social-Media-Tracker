@@ -115,7 +115,7 @@ export default function OrganizationJoinRequestsPage() {
               <UserCheck className="w-6 h-6 text-[#124E66]" /> Organization Join Requests
             </h1>
             <p className="text-xs text-[#2E3944] font-medium mt-1">
-              Review and approve pending employee requests to join your organization workspace.
+              Review and approve pending member requests to join your organization workspace.
             </p>
           </div>
           <button

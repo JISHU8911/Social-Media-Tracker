@@ -111,7 +111,7 @@ export default function AdminPostsPage() {
           <div className="sit-card p-12 text-center space-y-3">
             <FileText className="h-10 w-10 text-[#244855]/40 mx-auto" />
             <h3 className="text-sm font-bold text-[#244855]">No Posts Found</h3>
-            <p className="text-xs text-[#244855]/80">Create a new campaign post to start tracking employee social interactions.</p>
+            <p className="text-xs text-[#244855]/80">Create a new campaign post to start tracking member social interactions.</p>
             <Link href="/admin/posts/new" className="btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold">
               <PlusCircle className="h-4 w-4" /> Create Post
             </Link>
