@@ -407,26 +407,45 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
-  const calendarDays = [];
+  const calendarDays: { date: Date; isCurrentMonth: boolean }[] = [];
+  const overflowDays: { date: Date; isCurrentMonth: boolean }[] = [];
+
   for (let i = firstDayOfMonth - 1; i >= 0; i--) {
     calendarDays.push({
       date: new Date(year, month - 1, daysInPrevMonth - i),
       isCurrentMonth: false,
     });
   }
+
   for (let d = 1; d <= daysInMonth; d++) {
-    calendarDays.push({
+    const dayObj = {
       date: new Date(year, month, d),
       isCurrentMonth: true,
-    });
+    };
+    if (calendarDays.length < 35) {
+      calendarDays.push(dayObj);
+    } else {
+      overflowDays.push(dayObj);
+    }
   }
-  const remainingDays = 42 - calendarDays.length;
-  for (let d = 1; d <= remainingDays; d++) {
-    calendarDays.push({
-      date: new Date(year, month + 1, d),
-      isCurrentMonth: false,
-    });
+
+  if (calendarDays.length < 35) {
+    const remainingDays = 35 - calendarDays.length;
+    for (let d = 1; d <= remainingDays; d++) {
+      calendarDays.push({
+        date: new Date(year, month + 1, d),
+        isCurrentMonth: false,
+      });
+    }
   }
+
+  // Wrap any 6th-row overflow dates into the leading slots of Row 1 by day of week
+  overflowDays.forEach((overflowDay) => {
+    const dayOfWeek = overflowDay.date.getDay();
+    if (dayOfWeek < calendarDays.length && !calendarDays[dayOfWeek].isCurrentMonth) {
+      calendarDays[dayOfWeek] = overflowDay;
+    }
+  });
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -439,7 +458,7 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-[#244855] flex items-center gap-2">
-            <CalendarIcon className="w-6 h-6 text-[#E64833]" /> {orgName} Campaign Calendar
+            <CalendarIcon className="w-6 h-6 text-[#E64833]" /> {orgName} Social Calendar
           </h1>
           <p className="text-xs text-[#244855]/80 font-medium mt-1">
             Schedule social media posters, manage captions, and track posting workflows.

@@ -68,9 +68,10 @@ export default function Navbar() {
     navItems = [
       { href: '/super-admin', label: 'Super Admin', icon: ShieldAlert },
       { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/admin/calendar', label: 'Calendar', icon: CalendarIcon },
+      { href: '/admin/calendar', label: 'Social Calendar', icon: CalendarIcon },
       { href: '/admin/posts', label: 'Posts', icon: FileText },
-      { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/admin/panel', label: 'Admin Panel', icon: Users },
+      { href: '/profile', label: 'Profile', icon: Building2 },
     ];
   } else if (
     hasOrganization &&
@@ -80,18 +81,16 @@ export default function Navbar() {
   ) {
     navItems = [
       { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/admin/calendar', label: 'Calendar', icon: CalendarIcon },
+      { href: '/admin/calendar', label: 'Social Calendar', icon: CalendarIcon },
       { href: '/admin/posts', label: 'Posts', icon: FileText },
-      { href: '/admin/designations', label: 'Designations', icon: Briefcase },
-      { href: '/admin/join-requests', label: 'Join Requests', icon: UserCheck },
-      { href: '/admin/members', label: 'Members', icon: Users },
-      { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/admin/panel', label: 'Admin Panel', icon: Users },
+      { href: '/profile', label: 'Profile', icon: Building2 },
     ];
   } else if (hasOrganization) {
     // Verified Organization Member
     navItems = [
       { href: '/member', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/member/calendar', label: 'Calendar', icon: CalendarIcon },
+      { href: '/member/calendar', label: 'Social Calendar', icon: CalendarIcon },
       { href: '/member/posts', label: 'Published Posts', icon: Sparkles },
       { href: '/member/interactions', label: 'My Interactions', icon: Activity },
       { href: '/profile', label: 'Profile', icon: Building2 },
@@ -101,7 +100,7 @@ export default function Navbar() {
     navItems = [
       { href: '/member', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/join-organization', label: 'Join Organization', icon: Building2 },
-      { href: '/profile', label: 'Profile', icon: UserCheck },
+      { href: '/profile', label: 'Profile', icon: Building2 },
     ];
   }
 
