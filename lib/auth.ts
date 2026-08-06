@@ -78,25 +78,57 @@ export async function getServerSession(): Promise<AuthSession | null> {
 
   if (!user || !user.active) return null;
 
-  let effectiveOrgId = user.organizationId;
-  let effectiveOrgStatus = user.organization?.status || null;
-  let effectiveOrgIdCode = user.organization?.orgId || null;
-  let effectiveOrgName = user.organization?.name || null;
-  let effectiveOrgLogo = (user.organization as any)?.logoUrl || null;
+  // Platform Super Admins override organization-level roles
+  const isPlatformSuperAdminUser = user.role === 'PLATFORM_SUPER_ADMIN' || user.role === 'SUPER_ADMIN';
 
-  // If user has a membership and organizationId wasn't direct, pull from membership
-  if (!effectiveOrgId && user.memberships.length > 0) {
-    const primaryMembership = user.memberships[0];
-    effectiveOrgId = primaryMembership.organizationId;
-    effectiveOrgStatus = primaryMembership.organization.status;
-    effectiveOrgIdCode = primaryMembership.organization.orgId;
-    effectiveOrgName = primaryMembership.organization.name;
-    effectiveOrgLogo = (primaryMembership.organization as any)?.logoUrl || null;
+  let effectiveOrgId: string | null = user.organizationId;
+  let activeMembership = user.memberships.find((m) => m.organizationId === effectiveOrgId);
+
+  // If current active organizationId has no active membership (e.g. removed or reset), fallback to first active membership
+  if (!activeMembership && user.memberships.length > 0) {
+    activeMembership = user.memberships[0];
+    effectiveOrgId = activeMembership.organizationId;
+    // Persist auto-fallback active org to User record
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        organizationId: effectiveOrgId,
+        role: isPlatformSuperAdminUser ? user.role : activeMembership.role,
+      },
+    }).catch(() => {});
   }
 
-  // Section 5 Rules:
-  // REJECTED org status -> access denied
-  if (effectiveOrgStatus === 'REJECTED' && user.role !== 'PLATFORM_SUPER_ADMIN') {
+  let effectiveRole: UserRole = (isPlatformSuperAdminUser ? user.role : 'MEMBER') as UserRole;
+  let effectiveOrgStatus: string | null = null;
+  let effectiveOrgIdCode: string | null = null;
+  let effectiveOrgName: string | null = null;
+  let effectiveOrgLogo: string | null = null;
+
+  if (activeMembership) {
+    const org = activeMembership.organization;
+    effectiveOrgId = org.id;
+    effectiveOrgStatus = org.status;
+    effectiveOrgIdCode = org.orgId;
+    effectiveOrgName = org.displayName || org.name;
+    effectiveOrgLogo = org.logoUrl || null;
+    if (!isPlatformSuperAdminUser) {
+      effectiveRole = activeMembership.role as UserRole;
+    }
+  } else if (user.organization) {
+    const org = user.organization;
+    effectiveOrgStatus = org.status;
+    effectiveOrgIdCode = org.orgId;
+    effectiveOrgName = org.displayName || org.name;
+    effectiveOrgLogo = org.logoUrl || null;
+    if (!isPlatformSuperAdminUser) {
+      effectiveRole = user.role as UserRole;
+    }
+  } else if (isPlatformSuperAdminUser) {
+    effectiveRole = user.role as UserRole;
+  }
+
+  // Section 5 Rules: REJECTED org status -> access denied
+  if (effectiveOrgStatus === 'REJECTED' && !isPlatformSuperAdminUser) {
     return null;
   }
 
@@ -104,7 +136,7 @@ export async function getServerSession(): Promise<AuthSession | null> {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role as UserRole,
+    role: effectiveRole,
     organizationId: effectiveOrgId,
     organizationStatus: effectiveOrgStatus,
     orgIdCode: effectiveOrgIdCode,

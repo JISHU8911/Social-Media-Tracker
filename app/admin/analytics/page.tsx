@@ -161,7 +161,10 @@ export default function AnalyticsDashboardPage() {
                     outerRadius={90}
                     fill="#8884d8"
                     dataKey="count"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    label={({ name, percent, value }) => {
+                      if (!value || !percent || percent === 0) return null;
+                      return `${name} (${(percent * 100).toFixed(0)}%)`;
+                    }}
                   >
                     {(data?.platformData || []).map((entry, index) => (
                       <Cell

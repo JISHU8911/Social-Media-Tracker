@@ -19,6 +19,7 @@ model Organization {
   orgId         String?                  @unique // e.g. "ORG-1001"
   uniqueCode    String?                  @unique // e.g. "K8P2X9F4"
   name          String
+  displayName   String?                  // Optional custom short display name e.g. "FIEM ACM"
   officialEmail String                   @unique
   logoUrl       String?                  // Custom Organization Logo URL
   passwordHash  String?                  // Raw password hash stored during org signup before approval

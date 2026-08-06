@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { Users, Search, RefreshCw, AlertCircle, CheckCircle, Shield, UserMinus } from 'lucide-react';
+import { Users, Search, RefreshCw, AlertCircle, CheckCircle, Shield, UserMinus, Lock } from 'lucide-react';
 
 interface MemberItem {
   id: string;
@@ -17,19 +17,29 @@ interface MemberItem {
 
 export default function OrganizationMembersPage() {
   const [members, setMembers] = useState<MemberItem[]>([]);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('MEMBER');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const fetchMembers = async () => {
+  const fetchMembersAndSession = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/members');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load organization members');
-      if (Array.isArray(data.members)) setMembers(data.members);
+      const [sessionRes, membersRes] = await Promise.all([
+        fetch('/api/auth/me'),
+        fetch('/api/admin/members'),
+      ]);
+
+      const sessionData = await sessionRes.json();
+      if (sessionRes.ok && sessionData.user) {
+        setCurrentUserRole(sessionData.user.role);
+      }
+
+      const membersData = await membersRes.json();
+      if (!membersRes.ok) throw new Error(membersData.error || 'Failed to load organization members');
+      if (Array.isArray(membersData.members)) setMembers(membersData.members);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -38,10 +48,19 @@ export default function OrganizationMembersPage() {
   };
 
   useEffect(() => {
-    fetchMembers();
+    fetchMembersAndSession();
   }, []);
 
+  const isOrgSuperAdminUser =
+    currentUserRole === 'ORGANIZATION_SUPER_ADMIN' ||
+    currentUserRole === 'PLATFORM_SUPER_ADMIN' ||
+    currentUserRole === 'SUPER_ADMIN';
+
   const handleRoleChange = async (memberId: string, newRole: string) => {
+    if (!isOrgSuperAdminUser) {
+      setError('Only Organization Super Admin can change member roles.');
+      return;
+    }
     setError(null);
     setSuccess(null);
     try {
@@ -53,13 +72,17 @@ export default function OrganizationMembersPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update member role');
       setSuccess('Member role updated successfully.');
-      fetchMembers();
+      fetchMembersAndSession();
     } catch (err: any) {
       setError(err.message);
     }
   };
 
   const handleRemoveMember = async (memberId: string, name: string) => {
+    if (!isOrgSuperAdminUser) {
+      setError('Only Organization Super Admin can remove members.');
+      return;
+    }
     if (!confirm(`Are you sure you want to remove ${name} from your organization?`)) return;
     setError(null);
     setSuccess(null);
@@ -70,7 +93,7 @@ export default function OrganizationMembersPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to remove member');
       setSuccess(`Member ${name} removed.`);
-      fetchMembers();
+      fetchMembersAndSession();
     } catch (err: any) {
       setError(err.message);
     }
@@ -110,7 +133,7 @@ export default function OrganizationMembersPage() {
               />
             </div>
             <button
-              onClick={fetchMembers}
+              onClick={fetchMembersAndSession}
               className="btn-secondary px-3.5 py-2 text-xs font-bold flex items-center gap-1.5"
             >
               <RefreshCw className="w-4 h-4" /> Refresh
@@ -190,7 +213,11 @@ export default function OrganizationMembersPage() {
                       <td className="px-6 py-4 text-right space-x-2">
                         {m.role === 'ORGANIZATION_SUPER_ADMIN' ? (
                           <span className="text-xs font-semibold text-[#124E66] bg-[#D3D9D4] px-3 py-1.5 rounded-lg border border-[#748D92] inline-block">
-                            This is the primary organization administrator.
+                            Primary Organization Super Admin
+                          </span>
+                        ) : !isOrgSuperAdminUser ? (
+                          <span className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 inline-flex items-center gap-1">
+                            <Lock className="w-3 h-3" /> View Only (Super Admin Required)
                           </span>
                         ) : (
                           <>

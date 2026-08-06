@@ -300,6 +300,9 @@ export default function CalendarView({ userRole, canManage }: CalendarViewProps)
         const data = await res.json();
         throw new Error(data.error || 'Failed to delete entry');
       }
+      setIsDetailModalOpen(false);
+      setSelectedEntry(null);
+      setSelectedDayModal(null);
       fetchEntries();
     } catch (err: any) {
       alert(err.message);
