@@ -47,17 +47,27 @@ export function OrganizationJoinRequestsContent({ hideNavbar = false }: { hideNa
       const reqData = await reqRes.json();
       const sessionData = await sessionRes.json();
 
-      if (Array.isArray(reqData)) {
-        setRequests(reqData);
-      }
+      if (reqRes.ok && reqData) {
+        // Parse requests array safely
+        if (Array.isArray(reqData.requests)) {
+          setRequests(reqData.requests);
+        } else if (Array.isArray(reqData.joinRequests)) {
+          setRequests(reqData.joinRequests);
+        } else if (Array.isArray(reqData)) {
+          setRequests(reqData);
+        }
 
-      if (sessionData?.user?.organizationId) {
-        setOrganization({
-          id: sessionData.user.organizationId,
-          name: sessionData.user.organizationName || 'Organization',
-          orgId: sessionData.user.orgIdCode,
-          uniqueCode: sessionData.user.uniqueCode,
-        });
+        // Parse organization info safely
+        if (reqData.organization) {
+          setOrganization(reqData.organization);
+        } else if (sessionData?.user?.organizationId) {
+          setOrganization({
+            id: sessionData.user.organizationId,
+            name: sessionData.user.organizationName || 'Organization',
+            orgId: sessionData.user.orgIdCode,
+            uniqueCode: sessionData.user.uniqueCode,
+          });
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load join requests');
@@ -71,6 +81,7 @@ export function OrganizationJoinRequestsContent({ hideNavbar = false }: { hideNa
   }, []);
 
   const handleCopy = (text: string, field: 'orgId' | 'uniqueCode') => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
@@ -116,8 +127,8 @@ export function OrganizationJoinRequestsContent({ hideNavbar = false }: { hideNa
 
   const pendingRequests = requests.filter((r) => r.status === 'PENDING');
 
-  const displayOrgId = organization?.orgId || `ORG-${organization?.id?.slice(0, 4).toUpperCase() || '1001'}`;
-  const displayUniqueCode = organization?.uniqueCode || 'K8P2X9F4';
+  const displayOrgId = organization?.orgId || (organization?.id ? `ORG-${organization.id.slice(0, 4).toUpperCase()}` : 'ORG-1001');
+  const displayUniqueCode = organization?.uniqueCode || 'UNAVAILABLE';
 
   return (
     <div className={hideNavbar ? 'space-y-8 font-sans' : 'min-h-screen bg-[#D3D9D4] text-[#212A31] font-sans'}>
@@ -141,7 +152,7 @@ export function OrganizationJoinRequestsContent({ hideNavbar = false }: { hideNa
           </button>
         </div>
 
-        {/* REQUEST 5: ORGANIZATION INFORMATION SECTION */}
+        {/* ORGANIZATION INFORMATION SECTION */}
         <div className="sit-card p-6 bg-white border border-[#748D92] rounded-2xl shadow-soft space-y-4">
           <div className="flex items-center space-x-2 border-b border-[#748D92]/30 pb-3">
             <Building2 className="w-5 h-5 text-[#124E66]" />
@@ -245,23 +256,23 @@ export function OrganizationJoinRequestsContent({ hideNavbar = false }: { hideNa
                   className="sit-card p-6 bg-white border border-[#124E66]/60 rounded-2xl space-y-4 shadow-soft"
                 >
                   <div>
-                    <h3 className="text-base font-extrabold text-[#212A31]">{req.user.name}</h3>
-                    <p className="text-xs text-[#2E3944] font-medium">{req.user.email}</p>
+                    <h3 className="text-base font-extrabold text-[#212A31]">{req.user?.name || 'User'}</h3>
+                    <p className="text-xs text-[#2E3944] font-medium">{req.user?.email}</p>
                     <div className="mt-2 text-xs text-[#212A31] font-bold">
-                      Requested Designation: <span className="text-[#124E66]">{req.designation.designationName}</span>
+                      Requested Designation: <span className="text-[#124E66]">{req.designation?.designationName || 'Member'}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 pt-2 border-t border-[#748D92]/30">
                     <button
-                      onClick={() => handleApprove(req.id, req.user.name)}
+                      onClick={() => handleApprove(req.id, req.user?.name || 'User')}
                       disabled={actionLoading === req.id}
                       className="btn-primary flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
                     >
                       <Check className="w-4 h-4" /> Approve
                     </button>
                     <button
-                      onClick={() => handleReject(req.id, req.user.name)}
+                      onClick={() => handleReject(req.id, req.user?.name || 'User')}
                       disabled={actionLoading === req.id}
                       className="btn-danger flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
                     >
@@ -302,10 +313,10 @@ export function OrganizationJoinRequestsContent({ hideNavbar = false }: { hideNa
                     {requests.map((r) => (
                       <tr key={r.id} className="hover:bg-[#D3D9D4]/30 transition-colors">
                         <td className="px-6 py-4">
-                          <p className="font-extrabold text-sm text-[#212A31]">{r.user.name}</p>
-                          <p className="text-[#2E3944] font-medium">{r.user.email}</p>
+                          <p className="font-extrabold text-sm text-[#212A31]">{r.user?.name || 'User'}</p>
+                          <p className="text-[#2E3944] font-medium">{r.user?.email}</p>
                         </td>
-                        <td className="px-6 py-4 font-bold text-[#212A31]">{r.designation.designationName}</td>
+                        <td className="px-6 py-4 font-bold text-[#212A31]">{r.designation?.designationName || 'Member'}</td>
                         <td className="px-6 py-4">
                           <span
                             className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${
